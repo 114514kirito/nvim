@@ -1,5 +1,8 @@
+-- VSCode mode: markdown is handled by VSCode's built-in renderer
+if vim.g.vscode then return {} end
+
 return {
-  -- 关闭 markdownlint linter（避免 markdownlint 规则导致的 warning 红线）
+  -- Disable markdownlint linter
   {
     "mfussenegger/nvim-lint",
     optional = true,
@@ -9,14 +12,20 @@ return {
       },
     },
   },
+  -- Disable spellcheck and conceal in markdown (let markview render cleanly)
+  {
+    "folke/snacks.nvim",
+    optional = true,
+    opts = function(_, opts)
+      vim.api.nvim_create_autocmd("FileType", {
+        group = vim.api.nvim_create_augroup("markdown_opt", { clear = true }),
+        pattern = "markdown",
+        callback = function()
+          vim.opt_local.spell = false
+          vim.opt_local.wrap = false
+          vim.opt_local.conceallevel = 0
+        end,
+      })
+    end,
+  },
 }
-
--- 关闭 LazyVim 默认对 markdown 开启的拼写检查（这是"爆红"的真正元凶）
-vim.api.nvim_create_autocmd("FileType", {
-  group = vim.api.nvim_create_augroup("markdown_opt", { clear = true }),
-  pattern = "markdown",
-  callback = function()
-    vim.opt_local.spell = false
-    vim.opt_local.wrap = false
-  end,
-})

@@ -39,11 +39,15 @@ return {
     "nickjvandyke/opencode.nvim",
     version = "*",
     lazy = true,
+    keys = {
+      { "<leader>oa", mode = { "n", "v" }, desc = "Ask opencode" },
+      { "<leader>ot", desc = "Toggle opencode (tmux)" },
+      { "<leader>os", desc = "Start opencode server" },
+      { "<leader>oK", desc = "Stop opencode server" },
+    },
     config = function()
       vim.o.autoread = true
 
-      -- <leader>oa: 向 opencode 提问
-      -- 正常模式 → 整个 buffer   可视模式 → 选中内容
       vim.keymap.set("n", "<leader>oa", function()
         load_opencode().ask("@buffer: ")
       end, { desc = "Ask opencode (buffer)" })
@@ -52,18 +56,15 @@ return {
         load_opencode().ask("@this: ")
       end, { desc = "Ask opencode (selection)" })
 
-      -- <leader>ot: 切换到 opencode 的 tmux 窗口（没有则自动启动）
       vim.keymap.set("n", "<leader>ot", function()
         load_opencode().toggle()
-      end, { desc = "Toggle opencode tmux window" })
+      end, { desc = "Toggle opencode (tmux)" })
 
-      -- <leader>os: 启动 opencode server
       vim.keymap.set("n", "<leader>os", function()
         load_opencode().start()
         vim.notify("opencode server starting...", vim.log.levels.INFO)
       end, { desc = "Start opencode server" })
 
-      -- <leader>oK: 停止 opencode server
       vim.keymap.set("n", "<leader>oK", function()
         load_opencode().stop()
         vim.notify("opencode server stopped", vim.log.levels.INFO)

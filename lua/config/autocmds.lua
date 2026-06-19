@@ -18,19 +18,3 @@ vim.api.nvim_create_autocmd("FileType", {
     vim.bo.cindent = true
   end,
 })
-
--- Force mini.pairs to load — LazyVim's event="VeryLazy" fails with defaults.lazy=false
-vim.api.nvim_create_autocmd("User", {
-  pattern = "VeryLazy",
-  callback = function()
-    local path = vim.fn.stdpath("data") .. "/lazy/mini.pairs"
-    if vim.fn.isdirectory(path) == 1 then
-      vim.cmd("set rtp+=" .. path)
-      pcall(function()
-        require("mini.pairs").setup({
-          modes = { insert = true, command = true, terminal = false },
-        })
-      end)
-    end
-  end,
-})

@@ -21,6 +21,7 @@ vim.opt.visualbell = false
 vim.opt.belloff = "all"
 
 -- Modern Neovim defaults
+vim.g.ai_cmp = false -- disable AI completion ghost text (no Copilot/SuperMaven installed)
 vim.opt.cursorline = true -- highlight current line
 vim.opt.cursorlineopt = "number" -- only highlight line number (cleaner)
 vim.opt.wrap = false -- don't wrap long lines
