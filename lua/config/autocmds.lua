@@ -18,3 +18,16 @@ vim.api.nvim_create_autocmd("FileType", {
     vim.bo.cindent = true
   end,
 })
+
+-- Markdown: disable spellcheck/wrap/conceal (let markview render cleanly)
+if not vim.g.vscode then
+  vim.api.nvim_create_autocmd("FileType", {
+    group = vim.api.nvim_create_augroup("markdown_opt", { clear = true }),
+    pattern = "markdown",
+    callback = function()
+      vim.opt_local.spell = false
+      vim.opt_local.wrap = false
+      vim.opt_local.conceallevel = 0
+    end,
+  })
+end

@@ -12,20 +12,4 @@ return {
       },
     },
   },
-  -- Disable spellcheck and conceal in markdown (let markview render cleanly)
-  {
-    "folke/snacks.nvim",
-    optional = true,
-    opts = function(_, opts)
-      vim.api.nvim_create_autocmd("FileType", {
-        group = vim.api.nvim_create_augroup("markdown_opt", { clear = true }),
-        pattern = "markdown",
-        callback = function()
-          vim.opt_local.spell = false
-          vim.opt_local.wrap = false
-          vim.opt_local.conceallevel = 0
-        end,
-      })
-    end,
-  },
 }
