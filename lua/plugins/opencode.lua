@@ -1,26 +1,59 @@
--- opencode.nvim — 直接用，不依赖 tmux
--- opencode.nvim 自带内置面板（toggle），不需要外部 server
+-- opencode.nvim — tmux server/client 模式
+-- 关键：vim.g.opencode_opts 必须在插件加载前通过 init() 设置
 
 return {
   {
     "nickjvandyke/opencode.nvim",
     version = "*",
+    -- init 在插件加载前运行，保证 opts 先于 opencode 的 setup()
+    init = function()
+      vim.g.opencode_opts = {
+        server = {
+          cmd = "opencode",
+          start = function()
+            vim.fn.system({ "tmux", "new-window", "-dn", "opencode", "opencode", "serve" })
+          end,
+          stop = function()
+            vim.fn.system({ "tmux", "kill-window", "-t", "opencode" })
+          end,
+          toggle = function()
+            local windows = vim.fn.systemlist({ "tmux", "list-windows", "-F", "#W" })
+            if vim.tbl_contains(windows, "opencode") then
+              vim.fn.system({ "tmux", "select-window", "-t", "opencode" })
+            else
+              vim.fn.system({ "tmux", "new-window", "-n", "opencode", "opencode", "serve" })
+            end
+          end,
+        },
+      }
+    end,
+    keys = {
+      {
+        "<leader>oa",
+        function()
+          require("opencode").ask("@buffer: ")
+        end,
+        mode = "n",
+        desc = "Ask opencode (buffer)",
+      },
+      {
+        "<leader>oa",
+        function()
+          require("opencode").ask("@this: ")
+        end,
+        mode = "v",
+        desc = "Ask opencode (selection)",
+      },
+      {
+        "<leader>ot",
+        function()
+          require("opencode").toggle()
+        end,
+        desc = "Toggle opencode (tmux)",
+      },
+    },
     config = function()
       vim.o.autoread = true
-
-      -- <leader>oa: 提问 opencode
-      vim.keymap.set("n", "<leader>oa", function()
-        require("opencode").ask("@buffer: ")
-      end, { desc = "Ask opencode (buffer)" })
-
-      vim.keymap.set("v", "<leader>oa", function()
-        require("opencode").ask("@this: ")
-      end, { desc = "Ask opencode (selection)" })
-
-      -- <leader>ot: 打开/关闭 opencode 内置面板
-      vim.keymap.set("n", "<leader>ot", function()
-        require("opencode").toggle()
-      end, { desc = "Toggle opencode" })
     end,
   },
 }
