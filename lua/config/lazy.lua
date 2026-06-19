@@ -17,25 +17,25 @@ vim.opt.rtp:prepend(lazypath)
 -- Python LSP: use basedpyright (modern fork with better type checking)
 vim.g.lazyvim_python_lsp = "basedpyright"
 
--- VSCode 模式检测（设置 _G.is_vscode() 全局函数）
+-- VSCode 模式检测
 require("config.vscode")
 
 require("lazy").setup({
   spec = {
-    -- LazyVim 核心（包含 neo-tree, bufferline, lualine, telescope 等 UI 插件）
+    -- LazyVim 核心
     { "LazyVim/LazyVim", import = "lazyvim.plugins" },
 
-    -- 用户自定义插件（各文件内通过 vim.g.vscode 判断是否加载）
+    -- 用户自定义插件
     { import = "plugins" },
 
-    -- ── 语言 / UI Extras（仅在终端模式下加载）───────────────
-    { import = "lazyvim.plugins.extras.lang.clangd",        enabled = not _G.is_vscode },
-    { import = "lazyvim.plugins.extras.lang.cmake",         enabled = not _G.is_vscode },
-    { import = "lazyvim.plugins.extras.lang.go",            enabled = not _G.is_vscode },
-    { import = "lazyvim.plugins.extras.lang.python",        enabled = not _G.is_vscode },
-    { import = "lazyvim.plugins.extras.lang.json",          enabled = not _G.is_vscode },
-    { import = "lazyvim.plugins.extras.ui.smear-cursor",    enabled = not _G.is_vscode },
-    { import = "lazyvim.plugins.extras.ui.mini-indentscope", enabled = not _G.is_vscode },
+    -- 语言 / UI Extras（仅在终端模式下加载）
+    { import = "lazyvim.plugins.extras.lang.clangd",        enabled = not vim.g.vscode },
+    { import = "lazyvim.plugins.extras.lang.cmake",         enabled = not vim.g.vscode },
+    { import = "lazyvim.plugins.extras.lang.go",            enabled = not vim.g.vscode },
+    { import = "lazyvim.plugins.extras.lang.python",        enabled = not vim.g.vscode },
+    { import = "lazyvim.plugins.extras.lang.json",          enabled = not vim.g.vscode },
+    { import = "lazyvim.plugins.extras.ui.smear-cursor",    enabled = not vim.g.vscode },
+    { import = "lazyvim.plugins.extras.ui.mini-indentscope", enabled = not vim.g.vscode },
   },
   defaults = {
     lazy = false,
