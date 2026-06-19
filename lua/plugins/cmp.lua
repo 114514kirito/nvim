@@ -1,28 +1,20 @@
 -- ============================================
--- blink.cmp (LazyVim v8 default completion engine)
--- Tab: snippet_forward first (for function arg navigation),
--- then select_and_accept (for completion menu)
+-- blink.cmp — super-tab preset
+-- Tab: snippet 中则接受 → 否则 select_and_accept（选下一个/确认）→ snippet_forward → fallback
+-- S-Tab: select_prev → snippet_backward → fallback
+-- Enter: 始终接受当前选中项
 -- ============================================
 if vim.g.vscode then return {} end
 
 return {
   {
     "saghen/blink.cmp",
-    ---@param opts blink.cmp.Config
     opts = function(_, opts)
+      -- super-tab preset: Tab 既能导航也能确认，Enter 也是确认
       opts.keymap = vim.tbl_deep_extend("force", opts.keymap or {}, {
-        -- Tab: snippet_forward first (for function arg navigation),
-        -- then select_and_accept (for completion menu)
-        ["<Tab>"] = {
-          LazyVim.cmp.map({ "snippet_forward", "ai_nes", "ai_accept" }),
-          "select_and_accept",
-          "fallback",
-        },
-        ["<S-Tab>"] = {
-          "select_prev",
-          LazyVim.cmp.map({ "snippet_backward" }),
-          "fallback",
-        },
+        preset = "super-tab",
+        ["<S-Tab>"] = { "select_prev", "fallback" },
+        ["<CR>"] = { "accept", "fallback" },
       })
     end,
   },
