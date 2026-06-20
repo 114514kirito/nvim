@@ -9,7 +9,7 @@ return {
       { "<leader>cC", "<cmd>CMakeConfigure<CR>", desc = "CMake Configure" },
       { "<leader>cb", "<cmd>CMakeBuild<CR>", desc = "CMake Build" },
       { "<leader>cB", "<cmd>CMakeClean<CR>", desc = "CMake Clean" },
-      { "<leader>cr", "<cmd>CMakeRun<CR>", desc = "CMake Run" },
+      { "<leader>ce", "<cmd>CMakeRun<CR>", desc = "CMake Run" },
       { "<leader>ct", "<cmd>CMakeTest<CR>", desc = "CMake Test" },
       { "<leader>cs", "<cmd>CMakeStop<CR>", desc = "CMake Stop" },
       { "<leader>cg", "<cmd>CMakeGenerate<CR>", desc = "CMake Generate" },

@@ -108,12 +108,12 @@ return {
     end,
   },
 
-  -- 单文件 C/C++ 编译运行 (<leader>cR)
+  -- 单文件 C/C++ 编译运行 (<leader>cf)
   {
     "neovim/nvim-lspconfig",
     keys = {
       {
-        "<leader>cR",
+        "<leader>cf",
         function()
           local file = vim.fn.expand("%:p")
           local out = vim.fn.expand("%:p:r")

@@ -2,12 +2,8 @@
 if vim.g.vscode then return {} end
 
 -- ============================================================
--- LSP Key Overrides — 通用 preview/peek
--- ============================================================
--- gd  → 跳转到定义
--- gi  → 浮窗预览实现（所有 LSP 通用，不限于 clangd）
--- gI  → 跳转到实现
--- gr  → 重命名   gh → 引用   K → 悬浮文档
+-- LSP 配置：clangd 命令行 + 独有的 LSP keymaps
+-- gd / gI / K / gr 等由 LazyVim 原生提供，这里不覆盖
 -- ============================================================
 
 local function normalize(result)
@@ -56,24 +52,12 @@ return {
             "--header-insertion=iwyu",
             "--function-arg-placeholders",
             "--fallback-style=llvm",
-            -- 允许查询所有 gcc-compatible driver 以获取多平台系统头文件
-            -- (RISC-V / x86 / ARM 等), 单个项目可通过 .clangd 文件覆盖
             "--query-driver=**",
           },
         },
         ["*"] = {
           keys = {
-            -- gd: Jump to definition (auto-center)
-            {
-              "gd",
-              function()
-                vim.lsp.buf.definition()
-                vim.cmd("normal! zz")
-              end,
-              desc = "Goto Definition",
-            },
-
-            -- gi: Peek implementation (all LSPs, not just clangd)
+            -- gi: 浮窗预览实现（LazyVim 未提供此功能）
             {
               "gi",
               function()
@@ -96,46 +80,13 @@ return {
               desc = "Peek Implementation",
             },
 
-            -- gI: Jump to implementation (auto-center)
-            {
-              "gI",
-              function()
-                vim.lsp.buf.implementation()
-                vim.cmd("normal! zz")
-              end,
-              desc = "Goto Implementation",
-            },
-
-            -- gr: Rename
-            {
-              "gr",
-              function()
-                vim.lsp.buf.rename()
-              end,
-              desc = "Rename",
-              nowait = true,
-            },
-
-            -- gh: References
+            -- gh: 查看引用（LazyVim 用 gR，这里补充一个备选）
             {
               "gh",
               function()
                 vim.lsp.buf.references()
               end,
               desc = "References",
-            },
-
-            -- K: Enhanced hover with border
-            {
-              "K",
-              function()
-                vim.lsp.buf.hover({
-                  border = "rounded",
-                  max_width = math.floor(vim.o.columns * 0.5),
-                  max_height = math.floor(vim.o.lines * 0.4),
-                })
-              end,
-              desc = "Enhanced Hover",
             },
           },
         },
