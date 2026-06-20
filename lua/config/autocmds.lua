@@ -31,3 +31,104 @@ if not vim.g.vscode then
     end,
   })
 end
+
+-- :CheckCmp — 诊断 blink.cmp / clangd snippet 状态
+vim.api.nvim_create_user_command("CheckCmp", function()
+  local lines = {}
+
+  -- 1. Neovim snippet 引擎
+  table.insert(lines, "=== vim.snippet ===")
+  local has_native = pcall(function() return vim.snippet.active end)
+  table.insert(lines, "  available: " .. tostring(has_native))
+  if has_native then
+    local ok, active = pcall(vim.snippet.active, { direction = 1 })
+    table.insert(lines, "  active: " .. tostring(ok and active))
+  end
+
+  -- 2. blink.cmp snippets
+  table.insert(lines, "")
+  table.insert(lines, "=== blink.cmp ===")
+  local ok, snippets = pcall(function() return require("blink.cmp.config").snippets end)
+  if ok then
+    table.insert(lines, "  preset: " .. tostring(snippets.preset))
+    local expand = snippets.expand
+    table.insert(lines, "  expand: " .. (tostring(expand):match("function") and "function" or tostring(expand)))
+  else
+    table.insert(lines, "  ERROR: " .. tostring(snippets))
+  end
+
+  -- 3. LSP (clangd)
+  table.insert(lines, "")
+  table.insert(lines, "=== clangd ===")
+  local clients = vim.lsp.get_clients({ bufnr = 0 })
+  local found = false
+  for _, client in ipairs(clients) do
+    if client.name == "clangd" then
+      found = true
+      table.insert(lines, "  attached: yes")
+      local cmd = client.config.cmd or {}
+      for _, arg in ipairs(cmd) do
+        if arg:find("placeholder") or arg:find("query%-driver") then
+          table.insert(lines, "  " .. arg)
+        end
+      end
+      local init = client.config.init_options or {}
+      table.insert(lines, "  usePlaceholders: " .. tostring(init.usePlaceholders))
+      table.insert(lines, "  completeUnimported: " .. tostring(init.completeUnimported))
+      break
+    end
+  end
+  if not found then
+    table.insert(lines, "  NOT ATTACHED — open a C/C++ file first")
+  end
+
+  -- 4. 项目编译数据库
+  table.insert(lines, "")
+  table.insert(lines, "=== project ===")
+  local root = vim.fs.root(0, { "compile_commands.json", "compile_flags.txt", ".clangd", ".git", "Makefile" }) or "?"
+  table.insert(lines, "  root: " .. root)
+  local has_ccdb = vim.fn.filereadable(root .. "/compile_commands.json") == 1
+  local has_flags = vim.fn.filereadable(root .. "/compile_flags.txt") == 1
+  local has_clangd = vim.fn.filereadable(root .. "/.clangd") == 1
+  table.insert(lines, "  compile_commands.json: " .. tostring(has_ccdb))
+  table.insert(lines, "  compile_flags.txt: " .. tostring(has_flags))
+  table.insert(lines, "  .clangd: " .. tostring(has_clangd))
+  if not has_ccdb and not has_flags and not has_clangd then
+    table.insert(lines, "  WARNING: no compilation database — user functions may not be indexed")
+    table.insert(lines, "  Fix: cmake -DCMAKE_EXPORT_COMPILE_COMMANDS=ON .. (CMake)")
+    table.insert(lines, "  or: create compile_flags.txt with -I/path/to/headers")
+  end
+
+  -- 5. Tab keymap
+  table.insert(lines, "")
+  table.insert(lines, "=== keymaps ===")
+  local maps = vim.api.nvim_buf_get_keymap(0, "i")
+  for _, m in ipairs(maps) do
+    if (m.lhs == "<Tab>" or m.lhs == "<CR>") and m.desc and m.desc:find("blink") then
+      table.insert(lines, "  " .. m.lhs .. ": " .. m.desc)
+    end
+  end
+
+  -- 输出
+  local buf = vim.api.nvim_create_buf(false, true)
+  vim.api.nvim_buf_set_lines(buf, 0, -1, false, lines)
+  vim.api.nvim_buf_set_option(buf, "modifiable", false)
+  local width = 0
+  for _, line in ipairs(lines) do
+    width = math.max(width, #line)
+  end
+  local win = vim.api.nvim_open_win(buf, true, {
+    relative = "editor",
+    width = math.min(width + 2, vim.o.columns - 4),
+    height = math.min(#lines + 2, vim.o.lines - 4),
+    col = 2,
+    row = 2,
+    style = "minimal",
+    border = "rounded",
+    title = " CheckCmp ",
+    title_pos = "center",
+  })
+  vim.keymap.set("n", "q", function()
+    if vim.api.nvim_win_is_valid(win) then vim.api.nvim_win_close(win, true) end
+  end, { buffer = buf })
+end, { desc = "Diagnose blink.cmp / clangd snippet status" })
