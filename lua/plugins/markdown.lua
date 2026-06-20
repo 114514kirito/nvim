@@ -12,4 +12,13 @@ return {
       },
     },
   },
+
+  -- Markdown preview keymap
+  {
+    "iamcco/markdown-preview.nvim",
+    keys = {
+      { "<leader>mp", "<cmd>MarkdownPreview<CR>", desc = "Preview Markdown" },
+      { "<leader>ms", "<cmd>MarkdownPreviewStop<CR>", desc = "Stop Preview" },
+    },
+  },
 }

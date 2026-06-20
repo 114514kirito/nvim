@@ -39,9 +39,6 @@ return {
   {
     "folke/flash.nvim",
     event = "VeryLazy",
-    cond = function()
-      return vim.g.vscode == 1
-    end,
     opts = {
       modes = {
         search = { enabled = false }, -- VSCode 内搜索用 Ctrl+F
@@ -56,9 +53,6 @@ return {
   {
     "nvim-mini/mini.surround",
     version = false,
-    cond = function()
-      return vim.g.vscode == 1
-    end,
     config = true,
   },
 
@@ -66,9 +60,6 @@ return {
   {
     "nvim-mini/mini.ai",
     version = false,
-    cond = function()
-      return vim.g.vscode == 1
-    end,
     config = true,
   },
 
@@ -76,9 +67,6 @@ return {
   {
     "nvim-mini/mini.pairs",
     version = false,
-    cond = function()
-      return vim.g.vscode == 1
-    end,
     config = true,
   },
 
@@ -86,9 +74,6 @@ return {
   {
     "nvim-mini/mini.comment",
     version = false,
-    cond = function()
-      return vim.g.vscode == 1
-    end,
     config = true,
   },
 
@@ -96,17 +81,11 @@ return {
   {
     "nvim-mini/mini.move",
     version = false,
-    cond = function()
-      return vim.g.vscode == 1
-    end,
     config = true,
   },
 
   -- ── vim-repeat: 让 . 重复插件操作 ──
   {
     "tpope/vim-repeat",
-    cond = function()
-      return vim.g.vscode == 1
-    end,
   },
 }

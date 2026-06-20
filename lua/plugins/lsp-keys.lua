@@ -61,11 +61,12 @@ return {
         },
         ["*"] = {
           keys = {
-            -- gd: Jump to definition
+            -- gd: Jump to definition (auto-center)
             {
               "gd",
               function()
                 vim.lsp.buf.definition()
+                vim.cmd("normal! zz")
               end,
               desc = "Goto Definition",
             },
@@ -93,11 +94,12 @@ return {
               desc = "Peek Implementation",
             },
 
-            -- gI: Jump to implementation
+            -- gI: Jump to implementation (auto-center)
             {
               "gI",
               function()
                 vim.lsp.buf.implementation()
+                vim.cmd("normal! zz")
               end,
               desc = "Goto Implementation",
             },

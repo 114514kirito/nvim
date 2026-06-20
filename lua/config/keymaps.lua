@@ -22,7 +22,7 @@ if not vim.g.vscode then
 
   -- <C-q> 关闭当前窗口（左手，代替 :q）
   vim.keymap.set("n", "<C-q>", "<cmd>q<CR>", { desc = "Quit window" })
-end
 
--- Escape clears search highlight（终端和 VSCode 都生效）
-vim.keymap.set("n", "<Esc>", "<cmd>nohlsearch<CR>", { desc = "Clear search highlight" })
+  -- <leader>nh 临时清除搜索高亮（n/N 跳转后自动恢复）
+  vim.keymap.set("n", "<leader>nh", "<cmd>nohlsearch<CR>", { desc = "Clear search highlight" })
+end

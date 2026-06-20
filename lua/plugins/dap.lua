@@ -63,21 +63,39 @@ return {
       -- ============================================================
       local mason_dir = vim.fn.stdpath("data") .. "/mason/packages"
 
-      dap.adapters.codelldb = {
-        type = "server",
-        port = "${port}",
-        executable = {
-          command = mason_dir .. "/codelldb/extension/adapter/codelldb",
-          args = { "--port", "${port}" },
-        },
-      }
+      local function check_adapter(name, path)
+        if vim.fn.filereadable(path) == 1 then
+          return true
+        end
+        vim.notify(
+          string.format("DAP: %s not installed.\nRun :MasonInstall %s to install it.", name, name),
+          vim.log.levels.ERROR,
+          { title = "DAP Adapter Missing" }
+        )
+        return false
+      end
 
-      dap.adapters.cppdbg = {
-        id = "cppdbg",
-        type = "executable",
-        command = mason_dir .. "/cpptools/extension/debugAdapters/bin/OpenDebugAD7",
-        options = { detached = false },
-      }
+      local codelldb_path = mason_dir .. "/codelldb/extension/adapter/codelldb"
+      if check_adapter("codelldb", codelldb_path) then
+        dap.adapters.codelldb = {
+          type = "server",
+          port = "${port}",
+          executable = {
+            command = codelldb_path,
+            args = { "--port", "${port}" },
+          },
+        }
+      end
+
+      local cppdbg_path = mason_dir .. "/cpptools/extension/debugAdapters/bin/OpenDebugAD7"
+      if check_adapter("cpptools", cppdbg_path) then
+        dap.adapters.cppdbg = {
+          id = "cppdbg",
+          type = "executable",
+          command = cppdbg_path,
+          options = { detached = false },
+        }
+      end
 
       -- ============================================================
       -- 3. Launch 配置 (C/C++)

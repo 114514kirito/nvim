@@ -19,6 +19,7 @@ local function tmux_window_exists()
 end
 
 local M = {}
+M._nvim_term_buf = nil -- 记录 nvim 终端模式的 opencode buffer
 
 function M.open()
   if tmux_running() then
@@ -31,12 +32,25 @@ function M.open()
   else
     -- fallback: nvim 内置终端
     vim.cmd("botright vsplit term://opencode --port")
+    M._nvim_term_buf = vim.api.nvim_get_current_buf()
     vim.cmd("wincmd p")
     vim.notify("opencode started in nvim terminal", vim.log.levels.INFO)
   end
 end
 
 function M.close()
+  -- nvim 终端模式：关闭 opencode 终端 buffer 和窗口
+  if M._nvim_term_buf and vim.api.nvim_buf_is_valid(M._nvim_term_buf) then
+    local wins = vim.fn.win_findbuf(M._nvim_term_buf)
+    for _, win in ipairs(wins) do
+      if vim.api.nvim_win_is_valid(win) then
+        vim.api.nvim_win_close(win, true)
+      end
+    end
+    M._nvim_term_buf = nil
+    vim.notify("opencode nvim terminal closed", vim.log.levels.INFO)
+  end
+  -- tmux 模式
   if tmux_running() and tmux_window_exists() then
     vim.fn.system({ "tmux", "kill-window", "-t", "opencode" })
     vim.notify("opencode tmux window closed", vim.log.levels.INFO)
