@@ -28,10 +28,11 @@ return {
   },
 
   -- 诊断命令：:CheckCmp — 检查 snippet/completion 状态
+  -- NOTE: 用 init 而非 config，避免覆盖 LazyVim 的 blink.cmp.setup()
   {
     "saghen/blink.cmp",
     cmd = "CheckCmp",
-    config = function()
+    init = function()
       vim.api.nvim_create_user_command("CheckCmp", function()
         local lines = {}
 
