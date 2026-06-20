@@ -54,7 +54,6 @@ return {
             "--background-index",
             "--clang-tidy",
             "--header-insertion=iwyu",
-            "--completion-style=detailed",
             "--function-arg-placeholders",
             "--fallback-style=llvm",
             -- 允许查询所有 gcc-compatible driver 以获取多平台系统头文件
