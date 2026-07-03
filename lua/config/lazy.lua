@@ -30,6 +30,7 @@ require("lazy").setup({
 
     -- 语言 / UI Extras（仅在终端模式下加载）
     { import = "lazyvim.plugins.extras.lang.clangd",        enabled = not vim.g.vscode },
+    { import = "lazyvim.plugins.extras.dap.core",             enabled = not vim.g.vscode },
     { import = "lazyvim.plugins.extras.lang.cmake",         enabled = not vim.g.vscode },
     { import = "lazyvim.plugins.extras.lang.go",            enabled = not vim.g.vscode },
     { import = "lazyvim.plugins.extras.lang.python",        enabled = not vim.g.vscode },
