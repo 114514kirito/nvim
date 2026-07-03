@@ -21,4 +21,15 @@ return {
       { "<leader>ms", "<cmd>MarkdownPreviewStop<CR>", desc = "Stop Preview" },
     },
   },
+
+  -- Inline markdown rendering
+  {
+    "MeanderingProgrammer/render-markdown.nvim",
+    ft = { "markdown" },
+    dependencies = { "nvim-treesitter/nvim-treesitter", "nvim-mini/mini.icons" },
+    opts = {
+      preset = "lazy",
+      render_modes = { "n", "c" },
+    },
+  },
 }

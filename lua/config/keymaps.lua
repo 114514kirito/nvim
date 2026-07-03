@@ -40,7 +40,7 @@ vim.keymap.set("n", "gh", function()
   if has_lsp() then
     vim.lsp.buf.references()
   else
-    vim.cmd("normal! gh")
+    vim.notify("No LSP client attached", vim.log.levels.WARN)
   end
 end, { desc = "References" })
 
@@ -49,7 +49,7 @@ vim.keymap.set("n", "gd", function()
   if has_lsp() then
     vim.lsp.buf.definition()
   else
-    vim.cmd("normal! gd")
+    vim.notify("No LSP client attached", vim.log.levels.WARN)
   end
 end, { desc = "Goto Definition" })
 
@@ -62,7 +62,7 @@ vim.keymap.set("n", "K", function()
       max_height = math.floor(vim.o.lines * 0.4),
     })
   else
-    vim.cmd("normal! K")
+    vim.notify("No LSP client attached", vim.log.levels.WARN)
   end
 end, { desc = "Enhanced Hover" })
 
