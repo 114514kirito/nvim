@@ -25,9 +25,6 @@ require("lazy").setup({
     -- LazyVim 核心
     { "LazyVim/LazyVim", import = "lazyvim.plugins" },
 
-    -- 用户自定义插件
-    { import = "plugins" },
-
     -- 语言 / UI Extras（仅在终端模式下加载）
     { import = "lazyvim.plugins.extras.lang.clangd",        enabled = not vim.g.vscode },
     { import = "lazyvim.plugins.extras.dap.core",             enabled = not vim.g.vscode },
@@ -37,6 +34,9 @@ require("lazy").setup({
     { import = "lazyvim.plugins.extras.lang.json",          enabled = not vim.g.vscode },
     { import = "lazyvim.plugins.extras.ui.smear-cursor",    enabled = not vim.g.vscode },
     { import = "lazyvim.plugins.extras.ui.mini-indentscope", enabled = not vim.g.vscode },
+
+    -- 用户自定义插件
+    { import = "plugins" },
   },
   defaults = {
     lazy = false,
