@@ -1,16 +1,19 @@
 -- ============================================================
 -- Go 后端开发配置
--- 基础架构由 LazyVim extras/lang/go 提供
--- 本文件仅做增强，所有设置仅影响 Go 文件
--- 参考: chaozwn/astronvim_user (AstroNvim v5 Go config)
+-- 基于 LazyVim extras/lang/go，仅做增量增强
+-- 所有设置仅影响 Go 文件，不污染 C/C++/Python
 -- ============================================================
 if vim.g.vscode then return {} end
 
 return {
   -- ═══════════════════════════════════════════════════════════
-  -- 1. gopls — 在 LazyVim 基础上追加分析器 + 补全微调
-  --    LazyVim 已设: gofumpt/staticcheck/codelenses/hints/nilness/unusedparams/unusedwrite/useany
-  --    这里追加: shadow/unreachable/fillreturns/nonewvars/deepequalerrors/simappends/unusedvariable/undeclaredname
+  -- 1. gopls — 在 LazyVim 默认之上叠加分析器 + 补全微调
+  --    关键: LazyVim 已设 gofumpt/codelenses/hints/nilness/unusedparams/
+  --    unusedwrite/useany/staticcheck/completeUnimported/usePlaceholders/
+  --    directoryFilters/init_options。这里的 analyses 等字段会
+  --    与 LazyVim 深度合并 (vim.tbl_deep_extend)，不会覆盖。
+  --    注意: 不要写 setup = function() end，否则会覆盖 LazyVim
+  --    的 semanticTokens workaround!
   -- ═══════════════════════════════════════════════════════════
   {
     "neovim/nvim-lspconfig",
@@ -18,12 +21,9 @@ return {
       servers = {
         gopls = {
           single_file_support = true,
-          -- 关键: 保持 init_options，否则 LazyVim semanticTokens 会被覆盖
-          init_options = {
-            semanticTokens = true,
-          },
           settings = {
             gopls = {
+              -- 追加的分析器（与 LazyVim 的合并）
               analyses = {
                 shadow = true,
                 unreachable = true,
@@ -34,6 +34,7 @@ return {
                 unusedvariable = true,
                 undeclaredname = true,
               },
+              -- 补全增强
               completeUnimported = true,
               completionDocumentation = true,
               deepCompletion = true,
@@ -42,6 +43,7 @@ return {
               hoverKind = "FullDocumentation",
               usePlaceholders = false,
               diagnosticsDelay = "500ms",
+              -- Inlay hints
               hints = {
                 assignVariableTypes = true,
                 compositeLiteralFields = true,
@@ -53,10 +55,6 @@ return {
               },
             },
           },
-          -- 必须保留 LazyVim 的 semanticTokens workaround
-          setup = function(_, _)
-            -- 由 LazyVim 的 setup 处理
-          end,
         },
       },
     },
@@ -64,7 +62,7 @@ return {
 
   -- ═══════════════════════════════════════════════════════════
   -- 2. conform — goimports + gopls 收尾
-  --    参考 chaozwn: lsp_format="last" 确保 goimports 分组后 gopls 最终格式化
+  --    保存时: goimports 整理 import → gopls 最终格式化
   -- ═══════════════════════════════════════════════════════════
   {
     "stevearc/conform.nvim",
@@ -77,7 +75,7 @@ return {
   },
 
   -- ═══════════════════════════════════════════════════════════
-  -- 3. gopher.nvim — 代码生成
+  -- 3. gopher.nvim — struct tag / 接口实现 / if err / 测试桩
   -- ═══════════════════════════════════════════════════════════
   {
     "olexsmir/gopher.nvim",
@@ -112,8 +110,7 @@ return {
   },
 
   -- ═══════════════════════════════════════════════════════════
-  -- 4. DAP 增强：行内变量值 + 持久断点
-  --    (adapter + launch configs 由 LazyVim Go extra + dap-go 处理)
+  -- 4. DAP 增强 — 行内变量值 + 持久断点
   -- ═══════════════════════════════════════════════════════════
   {
     "theHamsta/nvim-dap-virtual-text",
@@ -139,48 +136,7 @@ return {
   },
 
   -- ═══════════════════════════════════════════════════════════
-  -- 5. panic stack trace → 源码跳转
-  --    在终端/REPL 中看到 /path/to/file.go:123 时按 <leader>gj 跳转
-  --    (不用 gd 是为了不覆盖 LSP 的 gd 跳转定义)
-  -- ═══════════════════════════════════════════════════════════
-  {
-    "neovim/nvim-lspconfig",
-    init = function()
-      local group = vim.api.nvim_create_augroup("go_term_jump", { clear = true })
-      vim.api.nvim_create_autocmd("FileType", {
-        group = group,
-        pattern = "toggleterm",
-        callback = function(args)
-          vim.keymap.set("n", "<leader>gj", function()
-            local line = vim.api.nvim_get_current_line()
-            -- 匹配 go 编译器输出: file.go:123 或 /absolute/path/file.go:123
-            local patterns = {
-              "([%w_/%.%-]+%.go):(%d+)",     -- 带路径
-              "([%w_]+%.go):(%d+)",           -- 仅文件名
-            }
-            for _, pat in ipairs(patterns) do
-              local filepath, lnr = line:match(pat)
-              if filepath and lnr then
-                if vim.fn.filereadable(filepath) == 1 then
-                  vim.cmd("e " .. filepath)
-                elseif vim.fn.filereadable(vim.fn.getcwd() .. "/" .. filepath) == 1 then
-                  vim.cmd("e " .. vim.fn.getcwd() .. "/" .. filepath)
-                else
-                  vim.cmd("e " .. filepath) -- 让 vim 报 "new file" 提示
-                end
-                vim.api.nvim_win_set_cursor(0, { tonumber(lnr), 0 })
-                return
-              end
-            end
-            vim.notify("No 'file.go:line' pattern on this line", vim.log.levels.INFO)
-          end, { buffer = args.buf, desc = "Go: Jump to source from stack trace" })
-        end,
-      })
-    end,
-  },
-
-  -- ═══════════════════════════════════════════════════════════
-  -- 6. Mason 补装工具
+  -- 5. Mason 工具补装
   -- ═══════════════════════════════════════════════════════════
   {
     "mason-org/mason.nvim",
@@ -197,7 +153,7 @@ return {
   },
 
   -- ═══════════════════════════════════════════════════════════
-  -- 7. Go 文件缩进：tab（官方标准）
+  -- 6. Go 文件用 tab 缩进（官方标准）
   -- ═══════════════════════════════════════════════════════════
   {
     "neovim/nvim-lspconfig",
