@@ -51,7 +51,7 @@ return {
       -- 导致首次打开 C 文件时 clangd 不会自动启动。这里延迟补一个启动。
       vim.api.nvim_create_autocmd("BufReadPost", {
         group = group,
-        pattern = { "*.c", "*.h", "*.cpp", "*.hpp", "*.cc", "*.hh", "*.S" },
+        pattern = { "*.c", "*.h", "*.cpp", "*.hpp", "*.cc", "*.hh" },
         callback = function()
           local bufnr = vim.api.nvim_get_current_buf()
           vim.schedule(function()
