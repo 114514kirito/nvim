@@ -99,10 +99,8 @@ return {
 
       -- ============================================================
       -- 3. Launch 配置 (C/C++)
-      -- 优先加载项目级 .vscode/launch.json，否则使用交互式默认配置
+      -- .vscode/launch.json 现在由 nvim-dap 自动按需读取，无需手动加载
       -- ============================================================
-      local vscode = require("dap.ext.vscode")
-      vscode.load_launchjs(".vscode/launch.json", { c = { "cppdbg", "codelldb" }, cpp = { "cppdbg", "codelldb" } })
 
       local function pick_binary()
         return vim.fn.input("Executable: ", vim.fn.getcwd() .. "/", "file")
