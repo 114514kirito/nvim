@@ -1,7 +1,15 @@
 -- ============================================================
 -- Go 后端开发配置
 -- 基础：LazyVim extras/lang/go（gopls/delve/gofumpt/goimports/neotest/golangci-lint）
--- 增强：gopher.nvim 代码生成 / 更多 gopls 分析器 / DAP launch 配置 / 键位
+-- 增强：
+--   参考 chaozwn/astronvim_user 的优秀实践：
+--   - cmp-go-pkgs: import 路径补全
+--   - nvim-dap-virtual-text: 调试时行内变量值
+--   - persistent-breakpoints: 断点跨会话保存
+--   - Test Watch 模式: 文件变化自动重跑测试
+--   - preview_stack_trace: panic 堆栈跳转源码
+--   - conform lsp_format="last": gopls 收尾格式化
+--   加 gopher.nvim 代码生成 / 更多 gopls 分析器 / DAP launch 配置 / 键位
 -- 所有设置仅 Go 文件类型生效，不影响 C/C++、Python 等
 -- ============================================================
 if vim.g.vscode then return {} end
@@ -23,6 +31,7 @@ return {
         "gomodifytags",
         "impl",
         "gotests",
+        "iferr",
         "delve",
       },
     },
@@ -30,6 +39,7 @@ return {
 
   -- ═══════════════════════════════════════════════════════════
   -- gopls 增强（叠加 LazyVim 默认值）
+  --   参考 chaozwn: diagnosticsDelay / undeclaredname / unusedwrite
   -- ═══════════════════════════════════════════════════════════
   {
     "neovim/nvim-lspconfig",
@@ -47,13 +57,19 @@ return {
                 deepequalerrors = true,
                 simappends = true,
                 unusedvariable = true,
+                unusedwrite = true,
+                undeclaredname = true,
+                useany = true,
                 fieldalignment = false,
               },
               completeUnimported = true,
               completionDocumentation = true,
               deepCompletion = true,
               matcher = "Fuzzy",
+              symbolMatcher = "fuzzy",
               hoverKind = "FullDocumentation",
+              usePlaceholders = false,
+              diagnosticsDelay = "500ms",
               hints = {
                 assignVariableTypes = true,
                 compositeLiteralFields = true,
@@ -68,6 +84,49 @@ return {
         },
       },
     },
+  },
+
+  -- ═══════════════════════════════════════════════════════════
+  -- conform — goimports + gopls 收尾（参考 chaozwn: lsp_format="last"）
+  -- ═══════════════════════════════════════════════════════════
+  {
+    "stevearc/conform.nvim",
+    optional = true,
+    opts = {
+      formatters_by_ft = {
+        go = { "goimports", lsp_format = "last" },
+      },
+    },
+  },
+
+  -- ═══════════════════════════════════════════════════════════
+  -- cmp-go-pkgs — Go import 语句中输入时自动补全包路径
+  --   参考: chaozwn/astronvim_user pack-go.lua
+  -- ═══════════════════════════════════════════════════════════
+  {
+    "saghen/blink.cmp",
+    optional = true,
+    dependencies = {
+      {
+        "Snikimonkd/cmp-go-pkgs",
+        ft = "go",
+        enabled = vim.fn.executable("go") == 1,
+      },
+    },
+    opts = function(_, opts)
+      opts.sources = opts.sources or {}
+      opts.sources.providers = opts.sources.providers or {}
+      opts.sources.providers.go_pkgs = {
+        name = "go_pkgs",
+        module = "cmp_go_pkgs",
+        score_offset = 100,
+        async = true,
+        enabled = function()
+          return vim.fn.executable("go") == 1
+            and require("cmp_go_pkgs")._check_if_inside_imports()
+        end,
+      }
+    end,
   },
 
   -- ═══════════════════════════════════════════════════════════
@@ -106,21 +165,44 @@ return {
   },
 
   -- ═══════════════════════════════════════════════════════════
-  -- DAP — Go 调试 launch 配置（adapter 由 nvim-dap-go 自动注册）
+  -- DAP 增强：nvim-dap-virtual-text + persistent-breakpoints
+  --   参考: chaozwn/astronvim_user dap.lua
   -- ═══════════════════════════════════════════════════════════
+  {
+    "theHamsta/nvim-dap-virtual-text",
+    event = "VeryLazy",
+    opts = {
+      commented = true,
+      enabled = true,
+      enabled_commands = true,
+      only_first_definition = true,
+      clear_on_continue = true,
+      highlight_changed_variables = true,
+      all_frames = false,
+      virt_lines = true,
+      show_stop_reason = true,
+    },
+  },
+  {
+    "Weissle/persistent-breakpoints.nvim",
+    event = "VeryLazy",
+    opts = {
+      load_breakpoints_event = { "BufReadPost" },
+    },
+  },
+  -- Go DAP: adapter 由 nvim-dap-go 自动注册，这里追加 launch 配置
   {
     "mfussenegger/nvim-dap",
     optional = true,
-    -- 用 init 追加，不用 config 覆盖（dap.lua 已有 C/C++ 配置）
     init = function()
-      local group = vim.api.nvim_create_augroup("go_dap_setup", { clear = true })
+      -- persistent breakpoints: 用 <leader>db 替代 F9（跨语言统一）
+      local group = vim.api.nvim_create_augroup("go_dap_enhance", { clear = true })
       vim.api.nvim_create_autocmd("User", {
         group = group,
         pattern = "DapSetup",
         callback = function()
           local ok, dap = pcall(require, "dap")
-          if not ok then return end
-          if not dap.adapters.go then return end
+          if not ok or not dap.adapters.go then return end
 
           dap.configurations.go = dap.configurations.go or {}
           local existing = {}
@@ -159,12 +241,49 @@ return {
   },
 
   -- ═══════════════════════════════════════════════════════════
-  -- neotest-golang 键位 (which-key: <leader>tg)
+  -- panic stack trace 跳转 — gd 在终端/REPL 中解析文件:行号并跳转
+  --   参考: chaozwn/astronvim_user pack-go.lua preview_stack_trace
+  -- ═══════════════════════════════════════════════════════════
+  {
+    "neovim/nvim-lspconfig",
+    init = function()
+      local go_term_group = vim.api.nvim_create_augroup("go_term_stacktrace", { clear = true })
+      vim.api.nvim_create_autocmd("FileType", {
+        group = go_term_group,
+        pattern = { "dap-repl", "toggleterm" },
+        callback = function(args)
+          vim.keymap.set("n", "gd", function()
+            local line = vim.api.nvim_get_current_line()
+            -- go test panic:  /path/to/file.go:123
+            -- go runtime:     file.go:123
+            local patterns = {
+              "([^%s]+%.go):(%d+)",
+              "([%w_/%.%-]+%.go):(%d+)",
+            }
+            for _, pat in ipairs(patterns) do
+              local filepath, line_nr = line:match(pat)
+              if filepath and line_nr then
+                vim.cmd("e " .. filepath)
+                vim.api.nvim_win_set_cursor(0, { tonumber(line_nr), 0 })
+                return
+              end
+            end
+            vim.notify("No file:line pattern found on this line", vim.log.levels.INFO)
+          end, { buffer = args.buf, desc = "Jump to source (stack trace)" })
+        end,
+      })
+    end,
+  },
+
+  -- ═══════════════════════════════════════════════════════════
+  -- neotest 增强 — 添加 Test Watch + 跳转失败测试
+  --   参考: chaozwn/astronvim_user neotest.lua
   -- ═══════════════════════════════════════════════════════════
   {
     "nvim-neotest/neotest",
     optional = true,
     keys = {
+      -- 测试运行
       { "<leader>tg", group = "go test", icon = "" },
       { "<leader>tgr", function()
           require("neotest").run.run()
@@ -181,6 +300,23 @@ return {
       { "<leader>tgd", function()
           require("neotest").run.run({ strategy = "dap" })
         end, ft = "go", desc = "Debug test" },
+      { "<leader>tgo", function()
+          require("neotest").output.open()
+        end, ft = "go", desc = "Output hover" },
+      { "<leader>tgO", function()
+          require("neotest").output_panel.toggle()
+        end, ft = "go", desc = "Output panel" },
+      -- Test Watch（文件变化自动重跑）
+      { "<leader>tgw", group = "watch", icon = "" },
+      { "<leader>tgwt", function()
+          require("neotest").watch.toggle()
+        end, ft = "go", desc = "Toggle watch test" },
+      { "<leader>tgwf", function()
+          require("neotest").watch.toggle(vim.fn.expand("%"))
+        end, ft = "go", desc = "Watch file" },
+      { "<leader>tgws", function()
+          require("neotest").watch.stop()
+        end, ft = "go", desc = "Stop all watches" },
     },
   },
 
