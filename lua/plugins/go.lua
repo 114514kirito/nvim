@@ -100,34 +100,8 @@ return {
   },
 
   -- ═══════════════════════════════════════════════════════════
-  -- cmp-go-pkgs — Go import 语句中输入时自动补全包路径
-  --   参考: chaozwn/astronvim_user pack-go.lua
-  -- ═══════════════════════════════════════════════════════════
-  {
-    "saghen/blink.cmp",
-    optional = true,
-    dependencies = {
-      {
-        "Snikimonkd/cmp-go-pkgs",
-        ft = "go",
-        enabled = vim.fn.executable("go") == 1,
-      },
-    },
-    opts = function(_, opts)
-      opts.sources = opts.sources or {}
-      opts.sources.providers = opts.sources.providers or {}
-      opts.sources.providers.go_pkgs = {
-        name = "go_pkgs",
-        module = "cmp_go_pkgs",
-        score_offset = 100,
-        async = true,
-        enabled = function()
-          return vim.fn.executable("go") == 1
-            and require("cmp_go_pkgs")._check_if_inside_imports()
-        end,
-      }
-    end,
-  },
+  -- (已移除 cmp-go-pkgs — 依赖 nvim-cmp，与 blink.cmp 不兼容。
+  --  gopls 自身已提供 import 路径补全，无需额外插件。)
 
   -- ═══════════════════════════════════════════════════════════
   -- gopher.nvim — 代码生成（struct tag / 接口实现 / if err / 测试桩）
