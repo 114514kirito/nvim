@@ -3,18 +3,18 @@
 if vim.g.vscode then return {} end
 
 return {
-  -- 主题：少量透明保留质感，但主体不透明保证注释/代码高亮清晰可读
+  -- 主题：终端半透 + 实色底 — 侧边栏透出终端，编辑区不透明保证阅读体验
   {
     "folke/tokyonight.nvim",
     opts = {
-      transparent = false,           -- 主背景不透明，注释清晰可见
+      transparent = false,           -- 编辑区不透明，注释/代码高亮清晰
       styles = {
-        sidebars = "transparent",    -- 侧边栏半透（nvim-tree、trouble 等）
-        floats = "transparent",      -- 浮窗半透（hover、补全菜单等）
+        sidebars = "transparent",    -- 侧边栏（文件树、诊断列表）透出终端质感
+        floats = "transparent",      -- 浮窗半透（hover、补全菜单）
       },
-      on_colors = function(colors)
-        -- 提升注释亮度，防止透明背景下看不清
-        colors.Comment = { fg = "#8b9dc3" }
+      on_highlights = function(hl, colors)
+        -- 注释用更亮的颜色，在 dark terminal 中一目了然
+        hl.Comment = { fg = "#8B9DC3", italic = true }
       end,
     },
   },
