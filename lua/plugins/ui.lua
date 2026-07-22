@@ -3,7 +3,7 @@
 if vim.g.vscode then return {} end
 
 return {
-  -- 主题：开启透明背景，透出终端的半透明效果
+  -- 主题：关闭完全透明，保留终端半透明 + neovim 实色底保证高亮清晰
   {
     "folke/tokyonight.nvim",
     opts = {
