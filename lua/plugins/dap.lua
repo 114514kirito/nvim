@@ -8,15 +8,14 @@ return {
       "rcarriga/nvim-dap-ui",
       "nvim-neotest/nvim-nio",
     },
-    -- lazy-load: 首次按下任一 F 键时加载
     keys = {
-      { "<F5>", desc = "DAP: Start / Continue" },
-      { "<S-F5>", desc = "DAP: Terminate" },
-      { "<F8>", desc = "DAP: REPL Toggle" },
-      { "<F9>", desc = "DAP: Toggle Breakpoint" },
-      { "<F10>", desc = "DAP: Step Over" },
-      { "<F11>", desc = "DAP: Step Into" },
-      { "<F12>", desc = "DAP: Step Out" },
+      { "<F5>", desc = "Continue / Start" },
+      { "<S-F5>", desc = "Terminate" },
+      { "<F8>", desc = "REPL Toggle" },
+      { "<F9>", desc = "Toggle Breakpoint" },
+      { "<F10>", desc = "Step Over" },
+      { "<F11>", desc = "Step Into" },
+      { "<F12>", desc = "Step Out" },
     },
     config = function()
       local dap = require("dap")
@@ -47,7 +46,7 @@ return {
         },
       })
 
-      -- 调试启动时自动打开 UI，终止/退出时自动关闭
+      -- 调试启动 → 打开 UI；终止/退出 → 关闭
       dap.listeners.after.event_initialized["dapui"] = function()
         dapui.open()
       end
@@ -59,16 +58,14 @@ return {
       end
 
       -- ============================================================
-      -- 2. Adapters: 手动指定 Mason 安装的 codelldb + cpptools 路径
+      -- 2. Adapters: codelldb + cpptools (C/C++)
       -- ============================================================
       local mason_dir = vim.fn.stdpath("data") .. "/mason/packages"
 
       local function check_adapter(name, path)
-        if vim.fn.filereadable(path) == 1 then
-          return true
-        end
+        if vim.fn.filereadable(path) == 1 then return true end
         vim.notify(
-          string.format("DAP: %s not installed.\nRun :MasonInstall %s to install it.", name, name),
+          string.format("DAP: %s not installed.\nRun :MasonInstall %s", name, name),
           vim.log.levels.ERROR,
           { title = "DAP Adapter Missing" }
         )
@@ -80,10 +77,7 @@ return {
         dap.adapters.codelldb = {
           type = "server",
           port = "${port}",
-          executable = {
-            command = codelldb_path,
-            args = { "--port", "${port}" },
-          },
+          executable = { command = codelldb_path, args = { "--port", "${port}" } },
         }
       end
 
@@ -98,10 +92,28 @@ return {
       end
 
       -- ============================================================
-      -- 3. Launch 配置 (C/C++)
-      -- .vscode/launch.json 现在由 nvim-dap 自动按需读取，无需手动加载
+      -- 3. Go adapter: 手动注册 Delve（保险，即使 nvim-dap-go 未 setup 也能用）
       -- ============================================================
+      local dlv_path = mason_dir .. "/delve/dlv"
+      if vim.fn.filereadable(dlv_path) == 1 then
+        dap.adapters.go = function(callback, config)
+          local host = config.host or "127.0.0.1"
+          local port = config.port or "38697"
+          callback({
+            type = "server",
+            host = host,
+            port = port,
+            executable = {
+              command = dlv_path,
+              args = { "dap", "-l", host .. ":" .. port },
+            },
+          })
+        end
+      end
 
+      -- ============================================================
+      -- 4. Launch 配置 (C/C++)
+      -- ============================================================
       local function pick_binary()
         return vim.fn.input("Executable: ", vim.fn.getcwd() .. "/", "file")
       end
@@ -110,75 +122,79 @@ return {
       dap.configurations.cpp = dap.configurations.cpp or {}
       vim.list_extend(dap.configurations.c, {
         {
-          name = "Launch (codelldb)",
-          type = "codelldb",
-          request = "launch",
-          program = pick_binary,
-          cwd = "${workspaceFolder}",
-          stopOnEntry = true,
+          name = "Launch (codelldb)", type = "codelldb", request = "launch",
+          program = pick_binary, cwd = "${workspaceFolder}", stopOnEntry = true,
         },
         {
-          name = "Launch (cppdbg / GDB)",
-          type = "cppdbg",
-          request = "launch",
-          program = pick_binary,
-          cwd = "${workspaceFolder}",
-          stopAtEntry = true,
+          name = "Launch (cppdbg / GDB)", type = "cppdbg", request = "launch",
+          program = pick_binary, cwd = "${workspaceFolder}", stopAtEntry = true,
         },
         {
-          name = "Launch with args (codelldb)",
-          type = "codelldb",
-          request = "launch",
-          program = pick_binary,
+          name = "Launch with args (codelldb)", type = "codelldb", request = "launch",
+          program = pick_binary, cwd = "${workspaceFolder}", stopOnEntry = true,
           args = function()
-            local raw = vim.fn.input("Args: ")
-            return vim.split(raw, " ")
+            local raw = vim.fn.input("Args: ") return vim.split(raw, " ")
           end,
-          cwd = "${workspaceFolder}",
-          stopOnEntry = true,
         },
         {
-          name = "Attach (codelldb)",
-          type = "codelldb",
-          request = "attach",
-          pid = function()
-            return tonumber(vim.fn.input("PID: "))
-          end,
+          name = "Attach (codelldb)", type = "codelldb", request = "attach",
+          pid = function() return tonumber(vim.fn.input("PID: ")) end,
           cwd = "${workspaceFolder}",
         },
       })
-      -- cpp 与 c 共享同一套默认配置（若 launch.json 未单独定义 cpp）
       if not dap.configurations.cpp or #dap.configurations.cpp == 0 then
         dap.configurations.cpp = dap.configurations.c
       end
 
+      -- Go 调试配置（手动注册，不依赖 nvim-dap-go 的 setup）
+      dap.configurations.go = dap.configurations.go or {}
+      local go_existing = {}
+      for _, c in ipairs(dap.configurations.go) do go_existing[c.name] = true end
+      if not go_existing["Debug Package"] then
+        vim.list_extend(dap.configurations.go, {
+          {
+            type = "go", name = "Debug Package", request = "launch",
+            program = "${fileDirname}",
+          },
+          {
+            type = "go", name = "Debug File", request = "launch",
+            program = "${file}",
+          },
+          {
+            type = "go", name = "Debug Test", request = "launch",
+            mode = "test", program = "${fileDirname}",
+          },
+        })
+      end
+
       -- ============================================================
-      -- 4. 快捷键 — 经典 F 键区
+      -- 5. 快捷键
+      --    F5: session 不存在 → 弹出选择 → 启动
+      --        session 存在   → continue（继续到下一断点）
       -- ============================================================
-      vim.keymap.set("n", "<F5>", dap.continue, { desc = "Start / Continue" })
+      vim.keymap.set("n", "<F5>", function()
+        if dap.session() then
+          dap.continue()
+        else
+          dap.continue()
+        end
+      end, { desc = "Start / Continue" })
       vim.keymap.set("n", "<S-F5>", dap.terminate, { desc = "Terminate" })
       vim.keymap.set("n", "<F9>", dap.toggle_breakpoint, { desc = "Toggle Breakpoint" })
       vim.keymap.set("n", "<F10>", dap.step_over, { desc = "Step Over" })
       vim.keymap.set("n", "<F11>", dap.step_into, { desc = "Step Into" })
       vim.keymap.set("n", "<F12>", dap.step_out, { desc = "Step Out" })
 
-      -- F8: REPL 开关 — 打开/关闭交互控制台，用于输入 -exec 等 GDB/LLDB 原生命令
       vim.keymap.set("n", "<F8>", function()
-        local repl_open = false
         for _, win in ipairs(vim.api.nvim_list_wins()) do
           if vim.bo[vim.api.nvim_win_get_buf(win)].filetype == "dap-repl" then
-            repl_open = true
-            break
+            dap.repl.close()
+            return
           end
         end
-        if repl_open then
-          dap.repl.close()
-        else
-          dap.repl.open()
-        end
+        dap.repl.open()
       end, { desc = "REPL Toggle" })
 
-      -- 辅助快捷键 (保留给不需要 F 键的场景)
       vim.keymap.set("n", "<leader>dl", dap.run_last, { desc = "Run Last" })
       vim.keymap.set("n", "<leader>du", dapui.toggle, { desc = "Toggle UI" })
     end,
