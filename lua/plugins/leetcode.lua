@@ -55,19 +55,30 @@ return {
         non_standalone = true,
       },
 
-      --- 独立模式切换时，exit 后不退出整个 nvim（因为 lazy 已处理）
-      --- 但保留 non_standalone 以确保在已有 session 中也能用
-
       --- 问题列表缓存（7 天更新一次）
       cache = {
         update_interval = 60 * 60 * 24 * 7,
       },
 
-      --- C++ 注入：预置万能头文件 + std 命名空间
+      --- 代码注入：解决 LSP 报错（提交时自动忽略注入部分）
+      --- C++：预置万能头文件 + std 命名空间
+      --- Go：补齐 package main + 常用 import，gopls 不再报错
       injector = {
         ["cpp"] = {
           imports = function()
             return { "#include <bits/stdc++.h>", "using namespace std;" }
+          end,
+        },
+        ["golang"] = {
+          before = function()
+            return {
+              "package main",
+              "",
+              'import "math"',
+              'import "sort"',
+              'import "strconv"',
+              'import "strings"',
+            }
           end,
         },
       },
