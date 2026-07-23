@@ -3,12 +3,21 @@
 -- 依赖 nui.nvim + plenary.nvim（已安装）
 -- 使用 snacks.nvim 作为 picker（LazyVim 预装）
 -- 使用 tree-sitter-html 解析题目（LazyVim 预装）
+--
+-- 两种启动方式：
+--   独立模式:   终端执行 nvim leetcode.nvim（纯净刷题区，不污染项目）
+--   非独立模式: 在已有 nvim 中 <leader>Ll 或 :Leet
 -- ============================================
 if vim.g.vscode then return {} end
+
+local leet_arg = "leetcode.nvim"
 
 return {
   {
     "kawre/leetcode.nvim",
+    -- 独立模式判断：当启动参数为 leetcode.nvim 时立即加载接管进程；
+    -- 否则懒加载，通过 cmd/keys 触发
+    lazy = leet_arg ~= vim.fn.argv(0, -1),
     cmd = "Leet",
     dependencies = {
       "nvim-lua/plenary.nvim",
@@ -41,10 +50,13 @@ return {
         testcase = { size = "40%" },
       },
 
-      --- 非独立模式：不需要空 buffer list 即可启动
+      --- 非独立模式允许在已有 session 中 :Leet 打开
       plugins = {
         non_standalone = true,
       },
+
+      --- 独立模式切换时，exit 后不退出整个 nvim（因为 lazy 已处理）
+      --- 但保留 non_standalone 以确保在已有 session 中也能用
 
       --- 问题列表缓存（7 天更新一次）
       cache = {
