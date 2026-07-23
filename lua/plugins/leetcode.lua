@@ -6,7 +6,7 @@
 --
 -- 两种启动方式：
 --   独立模式:   终端执行 nvim leetcode.nvim（纯净刷题区）
---   非独立模式: 在已有 nvim 中 <leader>Ll 或 :Leet
+--   非独立模式: 在已有 nvim 中 <leader>lc 或 :Leet
 -- ============================================
 if vim.g.vscode then return {} end
 
@@ -49,7 +49,7 @@ return {
       -- ============================================================
       description = {
         position = "left",
-        width = "42%",               -- 略宽，更好地展示长题目
+        width = "42%",
         show_stats = true,
       },
 
@@ -80,9 +80,14 @@ return {
 
       -- ============================================================
       -- 代码注入：LSP 静默 + 开箱即用
-      -- 注入部分在 LeetCode 提交时自动忽略
+      --
+      -- ⚠️ 注意：injector 中 imports 支持 function 形式，
+      --    但 before / after 只能用纯 string 或 string[]，
+      --    源码 Question:inject() 不会调用 function！
+      --    注入部分在 LeetCode 提交时自动忽略。
       -- ============================================================
       injector = {
+        -- C++：万能头 + std 命名空间（通过 imports）
         ["cpp"] = {
           imports = function()
             return {
@@ -91,20 +96,23 @@ return {
             }
           end,
         },
+
+        -- Go：补齐 package main + 常用 import 块
+        --     before 被注入到 // @leet start 之前，gopls 不再报错
         ["golang"] = {
-          before = function()
-            return {
-              "package main",
-              "",
-              'import "math"',
-              'import "sort"',
-              'import "strconv"',
-              'import "strings"',
-              'import "container/heap"',
-              'import "container/list"',
-              'import "math/bits"',
-            }
-          end,
+          before = {
+            "package main",
+            "",
+            "import (",
+            '\t"container/heap"',
+            '\t"container/list"',
+            '\t"math"',
+            '\t"math/bits"',
+            '\t"sort"',
+            '\t"strconv"',
+            '\t"strings"',
+            ")",
+          },
         },
       },
 
@@ -122,60 +130,41 @@ return {
 
       -- ============================================================
       -- 主题：适配 tokyonight
-      -- 覆盖描述面板中的各元素颜色，提升阅读体验
       -- ============================================================
       theme = {
-        -- 难度标签：更鲜明的配色
         easy = { fg = "#4fd6be", bold = true },
         medium = { fg = "#ffc777", bold = true },
         hard = { fg = "#ff757f", bold = true },
-
-        -- 代码块背景：与 Normal 背景融合（避免补丁感）
         code = { italic = true },
-
-        -- 标题/输入输出标签
         header = { bold = true },
         followup = { bold = true },
-
-        -- 链接样式
         link = { underline = true },
-
-        -- 例题 <pre> 背景
         example = { italic = true },
-
-        -- 约束条件
         constraints = {},
-
-        -- 正常文字 / 次要文字（继承 colorscheme）
         normal = {},
         alt = {},
       },
 
       -- ============================================================
-      -- 钩子：进入/离开/打开题目时自动执行
+      -- 钩子：进入/打开题目时自动执行
       -- ============================================================
       hooks = {
-        -- 进入插件时
         ["enter"] = {
           function()
-            -- 隐藏行号、状态栏，最大化沉浸感
             vim.opt_local.number = false
             vim.opt_local.relativenumber = false
             vim.opt_local.signcolumn = "no"
           end,
         },
 
-        -- 打开题目时：美化描述窗口
         ["question_enter"] = {
           function(q)
-            -- 描述面板窗口优化（smooth scrolling + 无折叠列）
             local desc_win = q.description and q.description.winid
             if desc_win and vim.api.nvim_win_is_valid(desc_win) then
               vim.wo[desc_win].foldcolumn = "0"
               vim.wo[desc_win].colorcolumn = ""
               vim.wo[desc_win].cursorline = false
               vim.wo[desc_win].cursorcolumn = false
-              -- smooth scroll
               vim.wo[desc_win].smoothscroll = true
             end
           end,
@@ -184,19 +173,19 @@ return {
     },
 
     -- ============================================================
-    -- 全局快捷键（<leader>L 前缀）
+    -- 全局快捷键（<leader>lc 前缀，避免与 LazyVim 冲突）
     -- ============================================================
     keys = {
-      { "<leader>Ll", "<cmd>Leet<CR>",        desc = "LeetCode 面板" },
-      { "<leader>Ld", "<cmd>Leet daily<CR>",   desc = "每日一题" },
-      { "<leader>Lr", "<cmd>Leet random<CR>",  desc = "随机一题" },
-      { "<leader>Ls", "<cmd>Leet list<CR>",    desc = "搜索题目" },
-      { "<leader>Lt", "<cmd>Leet run<CR>",     desc = "运行测试" },
-      { "<leader>LS", "<cmd>Leet submit<CR>",  desc = "提交代码" },
-      { "<leader>LT", "<cmd>Leet tabs<CR>",    desc = "切换标签" },
-      { "<leader>Lg", "<cmd>Leet lang<CR>",    desc = "切换语言" },
-      { "<leader>LD", "<cmd>Leet desc toggle<CR>", desc = "切换题目描述" },
-      { "<leader>LC", "<cmd>Leet console<CR>", desc = "打开控制台" },
+      { "<leader>lco", "<cmd>Leet<CR>",              desc = "LeetCode 面板" },
+      { "<leader>lcd", "<cmd>Leet daily<CR>",         desc = "每日一题" },
+      { "<leader>lcr", "<cmd>Leet random<CR>",        desc = "随机一题" },
+      { "<leader>lcs", "<cmd>Leet list<CR>",          desc = "搜索题目" },
+      { "<leader>lct", "<cmd>Leet run<CR>",           desc = "运行测试" },
+      { "<leader>lcS", "<cmd>Leet submit<CR>",        desc = "提交代码" },
+      { "<leader>lcT", "<cmd>Leet tabs<CR>",          desc = "切换标签" },
+      { "<leader>lcg", "<cmd>Leet lang<CR>",          desc = "切换语言" },
+      { "<leader>lcD", "<cmd>Leet desc toggle<CR>",   desc = "切换题目描述" },
+      { "<leader>lcC", "<cmd>Leet console<CR>",       desc = "打开控制台" },
     },
   },
 }
