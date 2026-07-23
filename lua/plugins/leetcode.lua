@@ -1,144 +1,115 @@
 -- ============================================
--- leetcode.nvim: 终端刷题
--- 依赖 nui.nvim + plenary.nvim（已安装）
--- 使用 snacks.nvim 作为 picker（LazyVim 预装）
--- 使用 tree-sitter-html 解析题目（LazyVim 预装）
---
--- 两种启动方式：
---   独立模式:   终端执行 nvim leetcode.nvim（纯净刷题区）
---   非独立模式: 在已有 nvim 中 <leader>to 或 :Leet
+-- leetcode.nvim: 终端刷题 · 纯 C++
+-- 快捷键：<leader>t 前缀，无冲突
 -- ============================================
 if vim.g.vscode then return {} end
 
 local leet_arg = "leetcode.nvim"
 
---- 扩展翻译表（专业名词保留英文，括号内为中文说明）
---- 在插件加载后通过 debug.setupvalue 热注入，不修改任何第三方文件
-local function extend_translator()
-  local ok, translator = pcall(require, "leetcode.translator")
+--- 热注入翻译表（不改动插件源码）
+--- 格式：English (中文) — 专业名词保留英文
+local function inject_translations()
+  local ok, mod = pcall(require, "leetcode.translator")
   if not ok then return end
-
-  -- 找到 translator 模块里含翻译表的 upvalue
   local i = 1
   while true do
-    local name, value = debug.getupvalue(translator, i)
+    local name, val = debug.getupvalue(mod, i)
     if not name then break end
     if name == "_ENV" then
-      -- 扫描 _ENV 里的 translate 表
       local j = 1
       while true do
-        local env_name, env_val = debug.getupvalue(value, j)
-        if not env_name then break end
-        if type(env_val) == "table" and env_val["problems"] == "题库" then
-          -- 找到了！合并翻译
-          env_val["delete / sign out"] = "删除 / 退出登录 (Delete / Sign out)"
-          env_val["sign in (by cookie)"] = "Cookie 登录 (Sign in by Cookie)"
-          env_val["enter cookie"] = "输入 Cookie (Enter Cookie)"
-          env_val["sign-in successful"] = "登录成功 (Sign-in Successful)"
-          env_val["sign-in failed"] = "登录失败 (Sign-in Failed)"
-          env_val["signed in as"] = "已登录 (Signed in as)"
-          env_val["of"] = "/ (of)"
-          env_val["runtime"] = "Runtime (运行时间)"
-          env_val["runtime error"] = "Runtime Error (运行错误)"
-          env_val["memory"] = "Memory (内存)"
-          env_val["testcases"] = "Test Cases (测试用例)"
-          env_val["testcases passed"] = " 个 test cases 通过"
-          env_val["last executed input"] = "最后执行 input (Last Executed Input)"
-          env_val["input"] = "Input (输入)"
-          env_val["output"] = "Output (输出)"
-          env_val["expected"] = "Expected (预期输出)"
-          env_val["stdout"] = "Stdout (标准输出)"
-          env_val["question is for premium users only"] = "Premium 专属题目"
-          env_val["premium"] = "Premium (会员)"
-          env_val["you have attempted to run code too soon"] = "提交太频繁，请稍候重试"
-          env_val["similar questions"] = "相似题目 (Similar Questions)"
-          env_val["no similar questions available"] = "无相似题目"
-          env_val["no topics available"] = "无相关标签"
-          env_val["no hints available"] = "无提示"
-          env_val["drawn question is for premium users only. please try again"] = "Premium 专属题目，请重试"
-          env_val["please verify your email address in order to use your account"] = "请先验证邮箱"
-          env_val["use testcase"] = "添加到 Test Cases (Use Testcase)"
-          env_val["available languages"] = "可用语言 (Available Languages)"
-          env_val["languages"] = "语言 (Languages)"
-          env_val["language already set to"] = "语言已设为 (Language Set)"
-          env_val["skills"] = "技能 (Skills)"
-          env_val["reset"] = "重置 (Reset)"
-          env_val["question info"] = "题目信息 (Question Info)"
-          env_val["select a question"] = "选择题目 (Select)"
-          env_val["no questions opened"] = "无已打开题目"
-          env_val["no current question found"] = "未找到当前题目"
-          env_val["you're now signed out"] = "已退出登录"
-          env_val["submissions"] = "过去一年提交 (Submissions)"
-          env_val["active days"] = "累计提交天数 (Active Days)"
-          env_val["max streak"] = "最长连续 (Max Streak)"
-          env_val["more challenges"] = "更多挑战 (More Challenges)"
-          env_val["session"] = "进度 (Session)"
-          env_val["invalid"] = "无效 (Invalid)"
+        local _, env = debug.getupvalue(val, j)
+        if not env then break end
+        if type(env) == "table" and env["problems"] == "题库" then
+          -- 菜单
+          env["problems"] = "题库 (Problems)"
+          env["statistics"] = "统计 (Statistics)"
+          env["cache"] = "缓存 (Cache)"
+          env["exit"] = "退出 (Exit)"
+          env["back"] = "后退 (Back)"
+          env["menu"] = "菜单 (Menu)"
+          env["loading..."] = "加载中... (Loading)"
+          env["update"] = "更新 (Update)"
+          env["list"] = "列表 (List)"
+          env["random"] = "随机 (Random)"
+          env["daily"] = "每日 (Daily)"
+          env["sign in"] = "登录 (Sign In)"
+          env["sign in (by cookie)"] = "Cookie 登录"
+          env["signed in as"] = "已登录 (Signed in as)"
+          env["delete / sign out"] = "删除 / 退出登录"
+          env["sign-in successful"] = "登录成功"
+          env["sign-in failed"] = "登录失败"
+          env["enter cookie"] = "输入 Cookie"
+          env["you're now signed out"] = "已退出登录"
+          env["run"] = "运行 (Run)"
+          env["submit"] = "提交 (Submit)"
+          env["result"] = "执行结果 (Result)"
+          env["topics"] = "相关标签 (Topics)"
+          env["hints"] = "提示 (Hints)"
+          env["beats"] = "击败 (Beats)"
+          env["session"] = "进度 (Session)"
 
-          -- 难度 — 专业名词保留英文
-          env_val["all"] = "All (所有)"
-          env_val["easy"] = "Easy (简单)"
-          env_val["medium"] = "Medium (中等)"
-          env_val["hard"] = "Hard (困难)"
+          -- 题目描述
+          env["premium"] = "Premium (会员)"
+          env["similar questions"] = "相似题目 (Similar Questions)"
+          env["no similar questions available"] = "无相似题目"
+          env["no topics available"] = "无相关标签"
+          env["no hints available"] = "无提示"
+          env["question is for premium users only"] = "Premium 专属题目"
+          env["drawn question is for premium users only. please try again"] = "Premium 专属题目，请重试"
+          env["please verify your email address in order to use your account"] = "请先验证邮箱"
+          env["question info"] = "题目信息"
+          env["select a question"] = "选择题目"
+          env["no questions opened"] = "无已打开题目"
+          env["no current question found"] = "未找到当前题目"
+
+          -- 数据 — 专业名词保留
+          env["runtime"] = "Runtime (运行时间)"
+          env["runtime error"] = "Runtime Error"
+          env["memory"] = "Memory (内存)"
+          env["testcases"] = "Test Cases (测试用例)"
+          env["testcases passed"] = " 个 test cases 通过"
+          env["input"] = "Input (输入)"
+          env["output"] = "Output (输出)"
+          env["expected"] = "Expected (预期)"
+          env["stdout"] = "Stdout (标准输出)"
+          env["beats"] = "击败 (Beats)"
+          env["of"] = " / "
+          env["submissions"] = "过去一年提交 (Submissions)"
+          env["active days"] = "累计提交天数 (Active Days)"
+          env["max streak"] = "最长连续 (Max Streak)"
+
+          -- 难度
+          env["all"] = "All (所有)"
+          env["easy"] = "Easy (简单)"
+          env["medium"] = "Medium (中等)"
+          env["hard"] = "Hard (困难)"
 
           -- 判题状态
-          env_val["accepted"] = "Accepted (通过)"
-          env_val["wrong answer"] = "Wrong Answer (解答错误)"
-          env_val["compile error"] = "Compile Error (编译出错)"
-          env_val["time limit exceeded"] = "TLE (超时)"
-          env_val["output limit exceeded"] = "OLE (超输出限制)"
-          env_val["memory limit exceeded"] = "MLE (超内存)"
-          env_val["invalid testcase"] = "Invalid Testcase (无效用例)"
+          env["accepted"] = "Accepted (通过)"
+          env["wrong answer"] = "Wrong Answer (错误)"
+          env["compile error"] = "Compile Error (编译错误)"
+          env["time limit exceeded"] = "TLE (超时)"
+          env["output limit exceeded"] = "OLE (超过输出)"
+          env["memory limit exceeded"] = "MLE (超过内存)"
+          env["invalid testcase"] = "Invalid Testcase"
 
           -- 判题进度
-          env_val["pending…"] = "Pending… (排队中)"
-          env_val["judging…"] = "Judging… (判题中)"
-          env_val["finished"] = "Finished (完成)"
-          env_val["failed"] = "Failed (失败)"
-          break
-        end
-        j = j + 1
-      end
-      break
-    end
-    i = i + 1
-  end
-end
+          env["pending…"] = "Pending… (排队中)"
+          env["judging…"] = "Judging… (判题中)"
+          env["finished"] = "Finished (完成)"
+          env["failed"] = "Failed (失败)"
 
---- 无需修改插件源码即可汉化菜单按钮
---- MenuButton:init() 会调用 t(text) 翻译按钮文字
-local function add_menu_button_translations()
-  local ok, translator = pcall(require, "leetcode.translator")
-  if not ok then return end
-
-  local i = 1
-  while true do
-    local name, value = debug.getupvalue(translator, i)
-    if not name then break end
-    if name == "_ENV" then
-      local j = 1
-      while true do
-        local env_name, env_val = debug.getupvalue(value, j)
-        if not env_name then break end
-        if type(env_val) == "table" and env_val["problems"] == "题库" then
-          env_val["problems"] = "题库 (Problems)"
-          env_val["statistics"] = "统计 (Statistics)"
-          env_val["cache"] = "缓存 (Cache)"
-          env_val["exit"] = "退出 (Exit)"
-          env_val["back"] = "后退 (Back)"
-          env_val["menu"] = "菜单 (Menu)"
-          env_val["loading..."] = "加载中... (Loading)"
-          env_val["update"] = "更新 (Update)"
-          env_val["list"] = "列表 (List)"
-          env_val["random"] = "随机 (Random)"
-          env_val["daily"] = "每日 (Daily)"
-          env_val["sign in"] = "登录 (Sign In)"
-          env_val["run"] = "运行 (Run)"
-          env_val["submit"] = "提交 (Submit)"
-          env_val["result"] = "执行结果 (Result)"
-          env_val["topics"] = "相关标签 (Topics)"
-          env_val["hints"] = "提示 (Hints)"
-          env_val["beats"] = "击败 (Beats)"
+          env["skills"] = "技能 (Skills)"
+          env["languages"] = "语言 (Languages)"
+          env["available languages"] = "可用语言"
+          env["language already set to"] = "语言已设为"
+          env["use testcase"] = "添加到 Test Cases"
+          env["last executed input"] = "最后执行 input"
+          env["reset"] = "重置"
+          env["invalid"] = "无效"
+          env["more challenges"] = "更多挑战"
+          env["you have attempted to run code too soon"] = "提交太频繁，请稍候"
           break
         end
         j = j + 1
@@ -152,54 +123,37 @@ end
 return {
   {
     "kawre/leetcode.nvim",
+    -- 独立模式: nvim leetcode.nvim → 立即加载
+    -- 非独立模式: :Leet 或 <leader>t 懒加载
     lazy = leet_arg ~= vim.fn.argv(0, -1),
     cmd = "Leet",
-    dependencies = {
-      "nvim-lua/plenary.nvim",
-      "MunifTanjim/nui.nvim",
-    },
 
-    --- 插件加载后热注入翻译，不修改第三方源码
-    config = function(plugin, opts)
+    config = function(_, opts)
       require("leetcode").setup(opts)
-      extend_translator()
-      add_menu_button_translations()
+      inject_translations()
     end,
 
-    ---@type lc.UserConfig
     opts = {
       arg = "leetcode.nvim",
-      lang = "cpp",
+      lang = "cpp", -- 纯 C++，不用 Go
 
-      -- ============================================================
-      -- 中国区 — leetcode.cn
-      -- ============================================================
       cn = {
         enabled = true,
-        translator = true,          -- 开启中文翻译
-        translate_problems = true,  -- 翻译题目标题 + 描述
+        translator = true,
+        translate_problems = true,
       },
 
-      -- ============================================================
-      -- 编辑器行为
-      -- ============================================================
       editor = {
-        fold_imports = true,          -- 折叠 #include / using
-        reset_previous_code = true,   -- 每题从空白模板开始
+        fold_imports = true,
+        reset_previous_code = true,
       },
 
-      -- ============================================================
-      -- 题目描述面板
-      -- ============================================================
       description = {
         position = "left",
         width = "42%",
         show_stats = true,
       },
 
-      -- ============================================================
-      -- 运行/提交控制台
-      -- ============================================================
       console = {
         open_on_runcode = true,
         dir = "row",
@@ -208,73 +162,28 @@ return {
         testcase = { size = "40%" },
       },
 
-      -- ============================================================
-      -- 插件模式
-      -- ============================================================
-      plugins = {
-        non_standalone = true,
-      },
+      plugins = { non_standalone = true },
+      cache = { update_interval = 60 * 60 * 24 * 7 },
 
-      -- ============================================================
-      -- 问题列表缓存
-      -- ============================================================
-      cache = {
-        update_interval = 60 * 60 * 24 * 7,
-      },
-
-      -- ============================================================
-      -- 代码注入：LSP 静默 + 开箱即用
-      --
-      -- ⚠️ 注意：injector 中 imports 支持 function 形式，
-      --    但 before / after 只能用纯 string 或 string[]，
-      --    源码 Question:inject() 不会调用 function！
-      --    注入部分在 LeetCode 提交时自动忽略。
-      -- ============================================================
+      -- 只保留 C++ 万能头注入
       injector = {
-        -- C++：万能头 + std 命名空间（通过 imports）
         ["cpp"] = {
           imports = function()
-            return {
-              "#include <bits/stdc++.h>",
-              "using namespace std;",
-            }
+            return { "#include <bits/stdc++.h>", "using namespace std;" }
           end,
-        },
-
-        -- Go：补齐 package main + 常用 import 块
-        --     before 被注入到 // @leet start 之前，gopls 不再报错
-        ["golang"] = {
-          before = {
-            "package main",
-            "",
-            "import (",
-            '\t"container/heap"',
-            '\t"container/list"',
-            '\t"math"',
-            '\t"math/bits"',
-            '\t"sort"',
-            '\t"strconv"',
-            '\t"strings"',
-            ")",
-          },
         },
       },
 
-      -- ============================================================
-      -- 键盘映射（题目内）
-      -- ============================================================
+      -- 插件内部快捷键 — 不动你的 Shift+H/L
       keys = {
         toggle = { "q", "<Esc>" },
         confirm = { "<CR>" },
-        reset_testcases = { "r" },
-        use_testcase = { "U" },
-        focus_testcases = { "H" },
-        focus_result = { "L" },
+        reset_testcases = "r",
+        use_testcase = "U",
+        focus_testcases = "<C-h>",  -- Ctrl+h 切到用例面板（不抢 H）
+        focus_result = "<C-l>",     -- Ctrl+l 切到结果面板（不抢 L）
       },
 
-      -- ============================================================
-      -- 主题：适配 tokyonight
-      -- ============================================================
       theme = {
         easy = { fg = "#4fd6be", bold = true },
         medium = { fg = "#ffc777", bold = true },
@@ -289,9 +198,6 @@ return {
         alt = {},
       },
 
-      -- ============================================================
-      -- 钩子：进入/打开题目时自动执行
-      -- ============================================================
       hooks = {
         ["enter"] = {
           function()
@@ -300,7 +206,6 @@ return {
             vim.opt_local.signcolumn = "no"
           end,
         },
-
         ["question_enter"] = {
           function(q)
             local desc_win = q.description and q.description.winid
@@ -316,21 +221,17 @@ return {
       },
     },
 
-    -- ============================================================
-    -- 全局快捷键（<leader>t 前缀，t = 刷题）
-    -- <leader>t 没有任何冲突，完全空闲
-    -- ============================================================
+    -- 全局快捷键：<leader>t
     keys = {
-      { "<leader>to", "<cmd>Leet<CR>",              desc = "LeetCode 面板 (Open)" },
-      { "<leader>td", "<cmd>Leet daily<CR>",         desc = "每日一题 (Daily)" },
-      { "<leader>tr", "<cmd>Leet random<CR>",        desc = "随机一题 (Random)" },
-      { "<leader>ts", "<cmd>Leet list<CR>",          desc = "搜索题目 (Search)" },
-      { "<leader>tt", "<cmd>Leet run<CR>",           desc = "运行测试 (Test)" },
-      { "<leader>tS", "<cmd>Leet submit<CR>",        desc = "提交代码 (Submit)" },
-      { "<leader>tT", "<cmd>Leet tabs<CR>",          desc = "切换标签 (Tabs)" },
-      { "<leader>tg", "<cmd>Leet lang<CR>",          desc = "切换语言 (lanG)" },
-      { "<leader>tD", "<cmd>Leet desc toggle<CR>",   desc = "切换题目描述 (Desc)" },
-      { "<leader>tC", "<cmd>Leet console<CR>",       desc = "打开控制台 (Console)" },
+      { "<leader>to", "<cmd>Leet<CR>",            desc = "LeetCode (Open)" },
+      { "<leader>td", "<cmd>Leet daily<CR>",       desc = "每日一题 (Daily)" },
+      { "<leader>tr", "<cmd>Leet random<CR>",      desc = "随机一题 (Random)" },
+      { "<leader>ts", "<cmd>Leet list<CR>",        desc = "搜索题目 (Search)" },
+      { "<leader>tt", "<cmd>Leet run<CR>",         desc = "运行测试 (Test)" },
+      { "<leader>tS", "<cmd>Leet submit<CR>",      desc = "提交代码 (Submit)" },
+      { "<leader>tg", "<cmd>Leet lang<CR>",        desc = "切换语言 (lanG)" },
+      { "<leader>tD", "<cmd>Leet desc toggle<CR>", desc = "切换描述 (Desc)" },
+      { "<leader>tC", "<cmd>Leet console<CR>",     desc = "控制台 (Console)" },
     },
   },
 }
