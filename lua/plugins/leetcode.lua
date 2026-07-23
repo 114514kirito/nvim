@@ -60,7 +60,10 @@ return {
         },
       },
 
-      --- 题目内键盘映射
+      --- 中国区支持 — leetcode.cn
+      cn = {
+        enabled = true,
+      },
       keys = {
         toggle = { "q", "<Esc>" },
         confirm = { "<CR>" },
