@@ -9,7 +9,6 @@ if vim.g.vscode then return {} end
 return {
   {
     "kawre/leetcode.nvim",
-    build = ":TSUpdate html",  -- 确保 tree-sitter-html parser 已安装
     cmd = "Leet",
     dependencies = {
       "nvim-lua/plenary.nvim",
