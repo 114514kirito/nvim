@@ -229,6 +229,7 @@ return {
       { "<leader>ts", "<cmd>Leet list<CR>",        desc = "搜索题目 (Search)" },
       { "<leader>tt", "<cmd>Leet run<CR>",         desc = "运行测试 (Test)" },
       { "<leader>tS", "<cmd>Leet submit<CR>",      desc = "提交代码 (Submit)" },
+      { "<leader>tT", "<cmd>Leet tabs<CR>",         desc = "切换标签 (Tabs)" },
       { "<leader>tg", "<cmd>Leet lang<CR>",        desc = "切换语言 (lanG)" },
       { "<leader>tD", "<cmd>Leet desc toggle<CR>", desc = "切换描述 (Desc)" },
       { "<leader>tC", "<cmd>Leet console<CR>",     desc = "控制台 (Console)" },
