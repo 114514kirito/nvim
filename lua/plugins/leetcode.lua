@@ -135,7 +135,20 @@ return {
     },
 
     config = function(_, opts)
-      -- 确保 snacks.image 已初始化
+      -- 初始化 3rd/image.nvim（leetcode.nvim 用这个渲染题目图片）
+      -- backend=kitty 通过 KGP 协议在 Kitty/Ghostty 终端显示图片
+      pcall(function()
+        require("image").setup({
+          backend = "kitty",
+          processor = "magick_cli",
+          integrations = {
+            markdown = { enabled = true },
+            html = { enabled = true },
+          },
+          max_height_window_percentage = 50,
+        })
+      end)
+      -- 同时也启动 snacks.image 作为 fallback
       pcall(function()
         require("snacks").image.setup({})
       end)
