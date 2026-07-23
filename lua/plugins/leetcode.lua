@@ -140,7 +140,7 @@ return {
       pcall(function()
         require("image").setup({
           backend = "kitty",
-          processor = "magick_rock",           -- 改用 Lua 绑定, 兼容 ImageMagick 6.x
+          processor = "magick_cli",             -- magick_rock 与 IM6 兼容性差, 用 CLI
           integrations = {
             markdown = { enabled = true },
             html = { enabled = true },
