@@ -177,16 +177,16 @@ return {
     -- <leader>t 没有任何冲突，完全空闲
     -- ============================================================
     keys = {
-      { "<leader>to", "<cmd>Leet<CR>",              desc = "LeetCode 面板" },
-      { "<leader>td", "<cmd>Leet daily<CR>",         desc = "每日一题" },
-      { "<leader>tr", "<cmd>Leet random<CR>",        desc = "随机一题" },
-      { "<leader>ts", "<cmd>Leet list<CR>",          desc = "搜索题目" },
-      { "<leader>tt", "<cmd>Leet run<CR>",           desc = "运行测试" },
-      { "<leader>tS", "<cmd>Leet submit<CR>",        desc = "提交代码" },
-      { "<leader>tT", "<cmd>Leet tabs<CR>",          desc = "切换标签" },
-      { "<leader>tg", "<cmd>Leet lang<CR>",          desc = "切换语言" },
-      { "<leader>tD", "<cmd>Leet desc toggle<CR>",   desc = "切换题目描述" },
-      { "<leader>tC", "<cmd>Leet console<CR>",       desc = "打开控制台" },
+      { "<leader>to", "<cmd>Leet<CR>",              desc = "LeetCode 面板 (Open)" },
+      { "<leader>td", "<cmd>Leet daily<CR>",         desc = "每日一题 (Daily)" },
+      { "<leader>tr", "<cmd>Leet random<CR>",        desc = "随机一题 (Random)" },
+      { "<leader>ts", "<cmd>Leet list<CR>",          desc = "搜索题目 (Search)" },
+      { "<leader>tt", "<cmd>Leet run<CR>",           desc = "运行测试 (Test)" },
+      { "<leader>tS", "<cmd>Leet submit<CR>",        desc = "提交代码 (Submit)" },
+      { "<leader>tT", "<cmd>Leet tabs<CR>",          desc = "切换标签 (Tabs)" },
+      { "<leader>tg", "<cmd>Leet lang<CR>",          desc = "切换语言 (lanG)" },
+      { "<leader>tD", "<cmd>Leet desc toggle<CR>",   desc = "切换题目描述 (Desc)" },
+      { "<leader>tC", "<cmd>Leet console<CR>",       desc = "打开控制台 (Console)" },
     },
   },
 }
