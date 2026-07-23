@@ -173,19 +173,20 @@ return {
     },
 
     -- ============================================================
-    -- 全局快捷键（<leader>lc 前缀，避免与 LazyVim 冲突）
+    -- 全局快捷键（<leader>t 前缀，t = 刷题）
+    -- <leader>t 没有任何冲突，完全空闲
     -- ============================================================
     keys = {
-      { "<leader>lco", "<cmd>Leet<CR>",              desc = "LeetCode 面板" },
-      { "<leader>lcd", "<cmd>Leet daily<CR>",         desc = "每日一题" },
-      { "<leader>lcr", "<cmd>Leet random<CR>",        desc = "随机一题" },
-      { "<leader>lcs", "<cmd>Leet list<CR>",          desc = "搜索题目" },
-      { "<leader>lct", "<cmd>Leet run<CR>",           desc = "运行测试" },
-      { "<leader>lcS", "<cmd>Leet submit<CR>",        desc = "提交代码" },
-      { "<leader>lcT", "<cmd>Leet tabs<CR>",          desc = "切换标签" },
-      { "<leader>lcg", "<cmd>Leet lang<CR>",          desc = "切换语言" },
-      { "<leader>lcD", "<cmd>Leet desc toggle<CR>",   desc = "切换题目描述" },
-      { "<leader>lcC", "<cmd>Leet console<CR>",       desc = "打开控制台" },
+      { "<leader>to", "<cmd>Leet<CR>",              desc = "LeetCode 面板" },
+      { "<leader>td", "<cmd>Leet daily<CR>",         desc = "每日一题" },
+      { "<leader>tr", "<cmd>Leet random<CR>",        desc = "随机一题" },
+      { "<leader>ts", "<cmd>Leet list<CR>",          desc = "搜索题目" },
+      { "<leader>tt", "<cmd>Leet run<CR>",           desc = "运行测试" },
+      { "<leader>tS", "<cmd>Leet submit<CR>",        desc = "提交代码" },
+      { "<leader>tT", "<cmd>Leet tabs<CR>",          desc = "切换标签" },
+      { "<leader>tg", "<cmd>Leet lang<CR>",          desc = "切换语言" },
+      { "<leader>tD", "<cmd>Leet desc toggle<CR>",   desc = "切换题目描述" },
+      { "<leader>tC", "<cmd>Leet console<CR>",       desc = "打开控制台" },
     },
   },
 }
