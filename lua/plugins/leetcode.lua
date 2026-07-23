@@ -185,7 +185,7 @@ return {
         testcase = { size = "40%" },
       },
 
-      image_support = true,           -- 终端内渲染题目图片 (KGP)
+      image_support = false,          -- LeetCode CDN 图片不可达，暂关
 
       plugins = { non_standalone = true },
       cache = { update_interval = 60 * 60 * 24 * 7 },
