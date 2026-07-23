@@ -6,11 +6,148 @@
 --
 -- 两种启动方式：
 --   独立模式:   终端执行 nvim leetcode.nvim（纯净刷题区）
---   非独立模式: 在已有 nvim 中 <leader>lc 或 :Leet
+--   非独立模式: 在已有 nvim 中 <leader>to 或 :Leet
 -- ============================================
 if vim.g.vscode then return {} end
 
 local leet_arg = "leetcode.nvim"
+
+--- 扩展翻译表（专业名词保留英文，括号内为中文说明）
+--- 在插件加载后通过 debug.setupvalue 热注入，不修改任何第三方文件
+local function extend_translator()
+  local ok, translator = pcall(require, "leetcode.translator")
+  if not ok then return end
+
+  -- 找到 translator 模块里含翻译表的 upvalue
+  local i = 1
+  while true do
+    local name, value = debug.getupvalue(translator, i)
+    if not name then break end
+    if name == "_ENV" then
+      -- 扫描 _ENV 里的 translate 表
+      local j = 1
+      while true do
+        local env_name, env_val = debug.getupvalue(value, j)
+        if not env_name then break end
+        if type(env_val) == "table" and env_val["problems"] == "题库" then
+          -- 找到了！合并翻译
+          env_val["delete / sign out"] = "删除 / 退出登录 (Delete / Sign out)"
+          env_val["sign in (by cookie)"] = "Cookie 登录 (Sign in by Cookie)"
+          env_val["enter cookie"] = "输入 Cookie (Enter Cookie)"
+          env_val["sign-in successful"] = "登录成功 (Sign-in Successful)"
+          env_val["sign-in failed"] = "登录失败 (Sign-in Failed)"
+          env_val["signed in as"] = "已登录 (Signed in as)"
+          env_val["of"] = "/ (of)"
+          env_val["runtime"] = "Runtime (运行时间)"
+          env_val["runtime error"] = "Runtime Error (运行错误)"
+          env_val["memory"] = "Memory (内存)"
+          env_val["testcases"] = "Test Cases (测试用例)"
+          env_val["testcases passed"] = " 个 test cases 通过"
+          env_val["last executed input"] = "最后执行 input (Last Executed Input)"
+          env_val["input"] = "Input (输入)"
+          env_val["output"] = "Output (输出)"
+          env_val["expected"] = "Expected (预期输出)"
+          env_val["stdout"] = "Stdout (标准输出)"
+          env_val["question is for premium users only"] = "Premium 专属题目"
+          env_val["premium"] = "Premium (会员)"
+          env_val["you have attempted to run code too soon"] = "提交太频繁，请稍候重试"
+          env_val["similar questions"] = "相似题目 (Similar Questions)"
+          env_val["no similar questions available"] = "无相似题目"
+          env_val["no topics available"] = "无相关标签"
+          env_val["no hints available"] = "无提示"
+          env_val["drawn question is for premium users only. please try again"] = "Premium 专属题目，请重试"
+          env_val["please verify your email address in order to use your account"] = "请先验证邮箱"
+          env_val["use testcase"] = "添加到 Test Cases (Use Testcase)"
+          env_val["available languages"] = "可用语言 (Available Languages)"
+          env_val["languages"] = "语言 (Languages)"
+          env_val["language already set to"] = "语言已设为 (Language Set)"
+          env_val["skills"] = "技能 (Skills)"
+          env_val["reset"] = "重置 (Reset)"
+          env_val["question info"] = "题目信息 (Question Info)"
+          env_val["select a question"] = "选择题目 (Select)"
+          env_val["no questions opened"] = "无已打开题目"
+          env_val["no current question found"] = "未找到当前题目"
+          env_val["you're now signed out"] = "已退出登录"
+          env_val["submissions"] = "过去一年提交 (Submissions)"
+          env_val["active days"] = "累计提交天数 (Active Days)"
+          env_val["max streak"] = "最长连续 (Max Streak)"
+          env_val["more challenges"] = "更多挑战 (More Challenges)"
+          env_val["session"] = "进度 (Session)"
+          env_val["invalid"] = "无效 (Invalid)"
+
+          -- 难度 — 专业名词保留英文
+          env_val["all"] = "All (所有)"
+          env_val["easy"] = "Easy (简单)"
+          env_val["medium"] = "Medium (中等)"
+          env_val["hard"] = "Hard (困难)"
+
+          -- 判题状态
+          env_val["accepted"] = "Accepted (通过)"
+          env_val["wrong answer"] = "Wrong Answer (解答错误)"
+          env_val["compile error"] = "Compile Error (编译出错)"
+          env_val["time limit exceeded"] = "TLE (超时)"
+          env_val["output limit exceeded"] = "OLE (超输出限制)"
+          env_val["memory limit exceeded"] = "MLE (超内存)"
+          env_val["invalid testcase"] = "Invalid Testcase (无效用例)"
+
+          -- 判题进度
+          env_val["pending…"] = "Pending… (排队中)"
+          env_val["judging…"] = "Judging… (判题中)"
+          env_val["finished"] = "Finished (完成)"
+          env_val["failed"] = "Failed (失败)"
+          break
+        end
+        j = j + 1
+      end
+      break
+    end
+    i = i + 1
+  end
+end
+
+--- 无需修改插件源码即可汉化菜单按钮
+--- MenuButton:init() 会调用 t(text) 翻译按钮文字
+local function add_menu_button_translations()
+  local ok, translator = pcall(require, "leetcode.translator")
+  if not ok then return end
+
+  local i = 1
+  while true do
+    local name, value = debug.getupvalue(translator, i)
+    if not name then break end
+    if name == "_ENV" then
+      local j = 1
+      while true do
+        local env_name, env_val = debug.getupvalue(value, j)
+        if not env_name then break end
+        if type(env_val) == "table" and env_val["problems"] == "题库" then
+          env_val["problems"] = "题库 (Problems)"
+          env_val["statistics"] = "统计 (Statistics)"
+          env_val["cache"] = "缓存 (Cache)"
+          env_val["exit"] = "退出 (Exit)"
+          env_val["back"] = "后退 (Back)"
+          env_val["menu"] = "菜单 (Menu)"
+          env_val["loading..."] = "加载中... (Loading)"
+          env_val["update"] = "更新 (Update)"
+          env_val["list"] = "列表 (List)"
+          env_val["random"] = "随机 (Random)"
+          env_val["daily"] = "每日 (Daily)"
+          env_val["sign in"] = "登录 (Sign In)"
+          env_val["run"] = "运行 (Run)"
+          env_val["submit"] = "提交 (Submit)"
+          env_val["result"] = "执行结果 (Result)"
+          env_val["topics"] = "相关标签 (Topics)"
+          env_val["hints"] = "提示 (Hints)"
+          env_val["beats"] = "击败 (Beats)"
+          break
+        end
+        j = j + 1
+      end
+      break
+    end
+    i = i + 1
+  end
+end
 
 return {
   {
@@ -21,6 +158,13 @@ return {
       "nvim-lua/plenary.nvim",
       "MunifTanjim/nui.nvim",
     },
+
+    --- 插件加载后热注入翻译，不修改第三方源码
+    config = function(plugin, opts)
+      require("leetcode").setup(opts)
+      extend_translator()
+      add_menu_button_translations()
+    end,
 
     ---@type lc.UserConfig
     opts = {
