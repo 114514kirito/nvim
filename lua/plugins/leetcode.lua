@@ -127,8 +127,18 @@ return {
     -- 非独立模式: :Leet 或 <leader>t 懒加载
     lazy = leet_arg ~= vim.fn.argv(0, -1),
     cmd = "Leet",
+    dependencies = {
+      "nvim-lua/plenary.nvim",
+      "MunifTanjim/nui.nvim",
+      "3rd/image.nvim",            -- 终端图片渲染 (KGP)
+      "folke/snacks.nvim",         -- snacks.image fallback
+    },
 
     config = function(_, opts)
+      -- 确保 snacks.image 已初始化
+      pcall(function()
+        require("snacks").image.setup({})
+      end)
       require("leetcode").setup(opts)
       inject_translations()
     end,
@@ -161,6 +171,8 @@ return {
         result = { size = "60%" },
         testcase = { size = "40%" },
       },
+
+      image_support = true,           -- 终端内渲染题目图片 (KGP)
 
       plugins = { non_standalone = true },
       cache = { update_interval = 60 * 60 * 24 * 7 },
