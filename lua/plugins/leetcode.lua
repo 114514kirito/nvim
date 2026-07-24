@@ -262,9 +262,6 @@ return {
               vim.wo[desc_win].cursorcolumn = false
               vim.wo[desc_win].smoothscroll = true
             end
-
-            -- 修复 2：去二重 tab — $tabe 打开题目后，题目内容已是
-            -- tab page，关闭当前 tab（:tabclose 或 :q）即退出该题
           end,
         },
       },
