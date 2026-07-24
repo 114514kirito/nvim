@@ -236,24 +236,12 @@ return {
         -- 打开题目时：修复空格问题 + 美化描述窗口
         ["question_enter"] = {
           function(q)
-            -- 修复 1：题目 buffer 打开后强制回到 normal 模式，
-            -- 否则 <Space> 无法作为 leader 使用
+            -- 强制回到 normal 模式，否则 <Space> 无法作为 leader
             vim.schedule(function()
-              local current_win = vim.api.nvim_get_current_win()
-              -- 如果焦点在题目 buffer 的窗口
-              if q.winid and vim.api.nvim_win_is_valid(q.winid) then
-                vim.api.nvim_set_current_win(q.winid)
-                if vim.api.nvim_get_mode().mode == "i" then
-                  vim.cmd("stopinsert")
-                end
-                vim.api.nvim_set_current_win(current_win)
+              if vim.api.nvim_get_mode().mode == "i" then
+                vim.cmd("stopinsert")
               end
             end)
-
-            -- 修复 2：每道题的 tab page 独立关闭，不会嵌套
-            --     退出时只关当前题目的 tab，默认行为已正确
-            --     $tabe 在 create_buffer() 中创建，
-            --     WinClosed → _unmount → tabpage 自然退出
 
             -- 描述面板窗口优化
             local desc_win = q.description and q.description.winid
@@ -264,6 +252,9 @@ return {
               vim.wo[desc_win].cursorcolumn = false
               vim.wo[desc_win].smoothscroll = true
             end
+
+            -- 修复 2：去二重 tab — $tabe 打开题目后，题目内容已是
+            -- tab page，关闭当前 tab（:tabclose 或 :q）即退出该题
           end,
         },
       },
