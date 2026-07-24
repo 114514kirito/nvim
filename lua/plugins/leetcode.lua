@@ -140,12 +140,22 @@ return {
       pcall(function()
         require("image").setup({
           backend = "kitty",
-          processor = "magick_cli",             -- magick_rock 与 IM6 兼容性差, 用 CLI
+          processor = "magick_cli",
           integrations = {
             markdown = { enabled = true },
             html = { enabled = true },
           },
-          max_height_window_percentage = 50,
+          -- 图片大小：占描述窗口 90% 宽 / 40% 高，不超出 1920px
+          max_width_window_percentage = 90,
+          max_height_window_percentage = 40,
+          max_width = 1920,
+          max_height = 1080,
+          -- 允许放大低分辨率图片
+          scale_factor = 1.0,
+          -- KGP 渲染方式：normal → 直接传输比 chunks 快
+          kitty_method = "normal",
+          -- 窗口重叠时自动清理旧图片
+          window_overlap_clear_enabled = true,
         })
       end)
       -- 同时也启动 snacks.image 作为 fallback
